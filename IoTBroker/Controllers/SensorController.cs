@@ -53,7 +53,8 @@ public class SensorController : ControllerBase
             return Conflict($"Device {payload.DeviceId} already exists.");
 
         _logger.LogInformation($"Sensor {payload.DeviceId} created.");
-        return CreatedAtAction(nameof(GetSensorData), new { payload.DeviceId }, payload);
+        
+        return CreatedAtAction(nameof(GetSensorData), new { id = payload.DeviceId }, payload);
     }
 
     /// <summary>
