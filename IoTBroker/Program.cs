@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 
 /// <summary>
@@ -22,6 +23,12 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API for IoTBroker"
     });
 });
+builder.Services.AddControllers()
+    .AddJsonOptions(options => 
+    {
+        // Allow enum values as strings in JSON
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 var app = builder.Build();
 
