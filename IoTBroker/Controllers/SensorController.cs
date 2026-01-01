@@ -28,6 +28,11 @@ public class SensorController : ControllerBase
     {
         // Payload check
         if (payload == null) return BadRequest("No data provided.");
+        
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
 
         // DeviceId check
         if (string.IsNullOrWhiteSpace(payload.DeviceId))
