@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using IoTBroker.Services;
 using Microsoft.OpenApi.Models;
 
 /// <summary>
@@ -12,7 +13,12 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Services
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Allow enum values as strings in JSON
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -23,12 +29,8 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API for IoTBroker"
     });
 });
-builder.Services.AddControllers()
-    .AddJsonOptions(options => 
-    {
-        // Allow enum values as strings in JSON
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+
+builder.Services.AddSingleton<ISensorService, SensorService>();
 
 var app = builder.Build();
 

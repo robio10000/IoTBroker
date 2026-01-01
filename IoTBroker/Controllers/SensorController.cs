@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using IoTBroker.Models;
+using IoTBroker.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IoTBroker.Controllers;
@@ -8,150 +8,93 @@ namespace IoTBroker.Controllers;
 [Route("api/[controller]")]
 public class SensorController : ControllerBase
 {
-    // CRUD operations for sensor data can be implemented here
-
-    // In-memory cache for demonstration purposes
-    private static readonly ConcurrentDictionary<string, SensorPayload> _store = new();
     private readonly ILogger<SensorController> _logger;
 
-    public SensorController(ILogger<SensorController> logger)
+    private readonly ISensorService _sensorService;
+
+    public SensorController(ILogger<SensorController> logger, ISensorService sensorService)
     {
         _logger = logger;
+        _sensorService = sensorService;
     }
 
     /// <summary>
-    ///     Create new sensor data
+    /// Create new sensor data
     /// </summary>
     /// <param name="payload">The sensor data payload</param>
     /// <returns>Action result indicating success or failure</returns>
     [HttpPost]
     public IActionResult CreateSensorData([FromBody] SensorPayload payload)
     {
+        // Payload check
         if (payload == null) return BadRequest("No data provided.");
 
-        if (payload.Timestamp == default) payload.Timestamp = DateTime.UtcNow;
+        // DeviceId check
+        if (string.IsNullOrWhiteSpace(payload.DeviceId))
+            return BadRequest("DeviceId is required.");
 
-        switch (payload.Type)
+        var result = _sensorService.ProcessPayload(payload);
+
+        // Service result check
+        if (!result.Success)
         {
-            case SensorType.Numeric:
-                if (!double.TryParse(payload.Value, out _))
-                    return BadRequest("Value is not a valid number.");
-                break;
-            case SensorType.Boolean:
-                if (!bool.TryParse(payload.Value, out _))
-                    return BadRequest("Value is not a valid boolean.");
-                break;
-            case SensorType.String:
-                // No specific validation for string
-                break;
-            default:
-                return BadRequest("Unknown sensor type.");
+            if (result.Message.Contains("exists")) return Conflict(result.Message);
+            return BadRequest(result.Message);
         }
 
-        // TODO: Consideration of whether a history is needed here or not during refactoring 
-        if (!_store.TryAdd(payload.DeviceId, payload))
-            return Conflict($"Device {payload.DeviceId} already exists.");
-
-        _logger.LogInformation($"Sensor {payload.DeviceId} created.");
-        
+        _logger.LogInformation("Created new sensor data point for {DeviceId}", payload.DeviceId);
         return CreatedAtAction(nameof(GetSensorData), new { id = payload.DeviceId }, payload);
     }
 
     /// <summary>
-    ///     Get all sensor data
+    /// Get all sensor data
     /// </summary>
     /// <returns>List of all sensor data</returns>
     [HttpGet]
     public IActionResult GetAllSensorData()
     {
-        var list = _store.Values
-            .OrderByDescending(x => x.Timestamp)
-            .ToList();
-        return Ok(list);
+        return Ok(_sensorService.GetAll());
     }
 
     /// <summary>
-    ///     Get sensor data by device id
+    /// Get sensor data by device id
     /// </summary>
     /// <param name="id">The sensor device id</param>
     /// <returns>Sensor data for the specified device id</returns>
     [HttpGet("{id}")]
     public IActionResult GetSensorData(string id)
     {
-        // Logic to retrieve sensor data by id
+        var sensor = _sensorService.GetById(id);
+        if (sensor == null) return NotFound($"Device {id} not found.");
 
-        if (string.IsNullOrWhiteSpace(id)) return BadRequest("Id is required.");
-
-        if (!_store.TryGetValue(id, out var data)) return NotFound($"Device {id} not found.");
-
-        return Ok(data);
+        return Ok(sensor);
     }
 
     /// <summary>
-    ///     Update sensor data by device id
+    /// Get sensor history by device id
     /// </summary>
     /// <param name="id">The sensor device id</param>
-    /// <param name="payload">The updated sensor data payload</param>
-    /// <returns>Action result indicating success or failure</returns>
-    [HttpPut("{id}")]
-    public IActionResult UpdateSensorData(string id, [FromBody] SensorPayload payload)
+    /// <returns>Sensor history for the specified device id</returns>
+    [HttpGet("{id}/history")]
+    public IActionResult GetSensorHistory(string id)
     {
-        // Logic to update sensor data
+        var history = _sensorService.GetHistoryById(id);
+        if (!history.Any()) return NotFound($"No history found for device {id}.");
 
-        if (payload == null) return BadRequest("No data provided.");
-        if (string.IsNullOrWhiteSpace(id)) return BadRequest("Id is required.");
-        if (string.IsNullOrWhiteSpace(payload.DeviceId)) return BadRequest("DeviceId is required.");
-
-        if (!_store.ContainsKey(id)) return NotFound($"Device {id} not found.");
-
-        // Check if new id already exists if new id is different
-        // If payload.DeviceId differs and already exists, conflict
-        if (payload.DeviceId != id && _store.ContainsKey(payload.DeviceId))
-            return Conflict($"Device {payload.DeviceId} already exists.");
-
-        // Validate type and value
-        switch (payload.Type)
-        {
-            case SensorType.Numeric:
-                if (!double.TryParse(payload.Value, out _))
-                    return BadRequest("Value is not a valid number.");
-                break;
-            case SensorType.Boolean:
-                if (!bool.TryParse(payload.Value, out _))
-                    return BadRequest("Value is not a valid boolean.");
-                break;
-            case SensorType.String:
-                // No specific validation for string
-                break;
-            default:
-                return BadRequest("Unknown sensor type.");
-        }
-
-        if (payload.Timestamp == default) payload.Timestamp = DateTime.UtcNow;
-
-        // Remove old key if id changed
-        if (payload.DeviceId != id) _store.TryRemove(id, out _);
-
-        _store[payload.DeviceId] = payload;
-        _logger.LogInformation("Updated sensor data for {DeviceId}", payload.DeviceId);
-
-        return Ok(payload);
+        return Ok(history);
     }
 
     /// <summary>
-    ///     Delete sensor data by device id
+    /// Delete sensor data by device id
     /// </summary>
     /// <param name="id">The sensor device id</param>
     /// <returns>Action result indicating success or failure</returns>
     [HttpDelete("{id}")]
     public IActionResult DeleteSensorData(string id)
     {
-        // Logic to delete sensor data
-        if (string.IsNullOrWhiteSpace(id)) return BadRequest("Id is required.");
+        if (!_sensorService.Delete(id)) return NotFound($"Device {id} not found.");
 
-        if (!_store.TryRemove(id, out _)) return NotFound($"Device {id} not found.");
-
-        _logger.LogInformation("Deleted sensor data for {DeviceId}", id);
+        _logger.LogWarning("Deleted history for device {DeviceId}", id);
         return NoContent();
     }
 }
