@@ -26,6 +26,11 @@ public class SensorController : ControllerBase
     [HttpPost]
     public IActionResult CreateSensorData([FromBody] SensorPayload payload)
     {
+        // Redundant authentication check
+        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        if (client == null)
+            return Unauthorized("You must be authenticated to submit sensor data.");
+        
         // Payload check
         if (payload == null) return BadRequest("No data provided.");
         
@@ -38,7 +43,7 @@ public class SensorController : ControllerBase
         if (string.IsNullOrWhiteSpace(payload.DeviceId))
             return BadRequest("DeviceId is required.");
 
-        var result = _sensorService.ProcessPayload(payload);
+        var result = _sensorService.ProcessPayload(GetClientId(), payload);
 
         // Service result check
         if (!result.Success)
@@ -58,7 +63,12 @@ public class SensorController : ControllerBase
     [HttpGet]
     public IActionResult GetAllSensorData()
     {
-        return Ok(_sensorService.GetAll());
+        // Admin check
+        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        if (client != null && client.Roles.Contains("Admin"))
+            return Ok(_sensorService.GetAll(null));
+        
+        return Ok(_sensorService.GetAll(GetClientId()));
     }
 
     /// <summary>
@@ -69,7 +79,11 @@ public class SensorController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetSensorData(string id)
     {
-        var sensor = _sensorService.GetById(id);
+        // User check
+        if (!IsAuthorized(id))
+            return StatusCode(403, "Forbidden: You do not own this device.");
+        
+        var sensor = _sensorService.GetById(GetClientId(), id);
         if (sensor == null) return NotFound($"Device {id} not found.");
 
         return Ok(sensor);
@@ -83,7 +97,11 @@ public class SensorController : ControllerBase
     [HttpGet("{id}/history")]
     public IActionResult GetSensorHistory(string id)
     {
-        var history = _sensorService.GetHistoryById(id);
+        // User check
+        if (!IsAuthorized(id))
+            return StatusCode(403, "Forbidden: You do not own this device.");
+        
+        var history = _sensorService.GetHistoryById(GetClientId(), id);
         if (!history.Any()) return NotFound($"No history found for device {id}.");
 
         return Ok(history);
@@ -97,9 +115,36 @@ public class SensorController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult DeleteSensorData(string id)
     {
-        if (!_sensorService.Delete(id)) return NotFound($"Device {id} not found.");
+        // User check
+        if (!IsAuthorized(id))
+            return StatusCode(403, "Forbidden: You do not own this device.");
+        
+        if (!_sensorService.Delete(GetClientId(), id)) return NotFound($"Device {id} not found.");
 
         _logger.LogWarning("Deleted history for device {DeviceId}", id);
         return NoContent();
+    }
+    
+    private bool IsAuthorized(string deviceId)
+    {
+        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        if (client == null) return false;
+
+        // Admin can do everything
+        if (client.Roles.Contains("Admin")) return true;
+
+        // User can only access their own devices
+        return client.OwnedDevices.Contains(deviceId);
+    }
+    
+    /// <summary>
+    /// Get the authenticated client's ID from the HttpContext
+    /// </summary>
+    /// <returns>Client ID as string</returns>
+    private string GetClientId()
+    {
+        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        if (client == null) return string.Empty;
+        return client.Id;
     }
 }
