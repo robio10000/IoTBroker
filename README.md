@@ -67,8 +67,8 @@ Include the following header in your requests:
 This project is under active development. Our upcoming milestones include:
 
 1. **Rule Engine:** Implementing a logic layer to trigger automated actions based on sensor thresholds.
-2. **Unit & Integration Testing:** Comprehensive test suite to ensure business logic and client isolation stability.
-3. **Data Persistence:** Migrating In-Memory storage to a persistent database using **EF Core** (supporting SQLite, MySQL, and PostgreSQL).
+2. **Data Persistence:** Migrating In-Memory storage to a persistent database using **EF Core** (supporting SQLite, MySQL, and PostgreSQL).
+3. **Unit & Integration Testing:** Comprehensive test suite to ensure business logic and client isolation stability.
 4. **Frontend:** Building a modern real-time dashboard with **React** for data visualization.
 
 ---
