@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using IoTBroker.Middleware;
+using IoTBroker.Rules;
+using IoTBroker.Rules.Strategies;
 using IoTBroker.Services;
 using Microsoft.OpenApi.Models;
 
@@ -29,7 +31,7 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for IoTBroker"
     });
-    
+
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
         //Description = "In den Header 'X-API-KEY' eintragen",
@@ -39,7 +41,7 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "ApiKeyScheme"
     });
-    
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -59,6 +61,12 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddSingleton<ISensorService, SensorService>();
 builder.Services.AddSingleton<IApiKeyService, ApiKeyService>();
+
+builder.Services.AddSingleton<ITriggerStrategy, NumericTriggerStrategy>();
+builder.Services.AddSingleton<ITriggerStrategy, BooleanTriggerStrategy>();
+builder.Services.AddSingleton<ITriggerStrategy, StringTriggerStrategy>();
+
+builder.Services.AddSingleton<IRuleService, RuleService>();
 
 var app = builder.Build();
 

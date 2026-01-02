@@ -1,6 +1,5 @@
 using IoTBroker.Models;
 using IoTBroker.Services;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace IoTBroker.Rules.Actions;
 
@@ -23,6 +22,6 @@ public class SetDeviceValueAction : IRuleAction
         };
 
         // We re-inject the payload as if it came from a device
-        sensorService.ProcessPayload(clientId, payload);
+        sensorService.ProcessPayload(clientId, payload, true);
     }
 }
