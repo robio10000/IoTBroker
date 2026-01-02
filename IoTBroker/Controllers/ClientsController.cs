@@ -14,7 +14,7 @@ public record CreateClientRequest(string Name, List<string> Roles, HashSet<strin
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ClientsController : ControllerBase
+public class ClientsController : BaseApiController
 {
     private readonly IApiKeyService _apiKeyService;
 
@@ -32,16 +32,6 @@ public class ClientsController : ControllerBase
     }
 
     /// <summary>
-    ///     Check if the authenticated client has Admin role
-    /// </summary>
-    /// <returns>True if client is admin, false otherwise</returns>
-    private bool IsAdmin()
-    {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        return client != null && client.Roles.Contains("Admin");
-    }
-
-    /// <summary>
     ///     Check if the authenticated client matches the given client ID
     /// </summary>
     /// <param name="clientId">The client ID to check against</param>
@@ -51,20 +41,7 @@ public class ClientsController : ControllerBase
         var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
         return client != null && client.Id == clientId;
     }
-
-    // TODO: *1 Centralize client ID retrieval
-    /// <summary>
-    ///     Get the authenticated client's ID from the HttpContext
-    /// </summary>
-    /// <returns>Client ID as string</returns>
-    private string GetClientId()
-    {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        if (client == null) return string.Empty;
-        return client.Id;
-    }
-
-
+    
     /// <summary>
     ///     Get all registered API clients
     /// </summary>

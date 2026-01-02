@@ -6,7 +6,7 @@ namespace IoTBroker.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SensorController : ControllerBase
+public class SensorController : BaseApiController
 {
     private readonly ILogger<SensorController> _logger;
 
@@ -132,17 +132,5 @@ public class SensorController : ControllerBase
 
         // User can only access their own devices
         return client.OwnedDevices.Contains(deviceId);
-    }
-
-    // TODO: *1 Centralize client ID retrieval
-    /// <summary>
-    ///     Get the authenticated client's ID from the HttpContext
-    /// </summary>
-    /// <returns>Client ID as string</returns>
-    private string GetClientId()
-    {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        if (client == null) return string.Empty;
-        return client.Id;
     }
 }

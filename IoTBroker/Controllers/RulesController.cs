@@ -10,7 +10,7 @@ namespace IoTBroker.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class RulesController : ControllerBase
+public class RulesController : BaseApiController
 {
     private readonly IRuleService _ruleService;
 
@@ -56,17 +56,5 @@ public class RulesController : ControllerBase
         var clientId = GetClientId();
         if (_ruleService.DeleteRule(clientId, id)) return NoContent();
         return NotFound();
-    }
-
-    // TODO: *1 Centralize client ID retrieval
-    /// <summary>
-    ///     Get the authenticated client's ID from the HttpContext
-    /// </summary>
-    /// <returns>Client ID as string</returns>
-    private string GetClientId()
-    {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        if (client == null) return string.Empty;
-        return client.Id;
     }
 }
