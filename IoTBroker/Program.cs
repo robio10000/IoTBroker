@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using IoTBroker.Middleware;
 using IoTBroker.Services;
 using Microsoft.OpenApi.Models;
 
@@ -28,9 +29,36 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for IoTBroker"
     });
+    
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        //Description = "In den Header 'X-API-KEY' eintragen",
+        Description = "Enter your API key into the 'X-API-KEY' header",
+        In = ParameterLocation.Header,
+        Name = "X-API-KEY",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "ApiKeyScheme"
+    });
+    
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
+                },
+                In = ParameterLocation.Header
+            },
+            new List<string>()
+        }
+    });
 });
 
 builder.Services.AddSingleton<ISensorService, SensorService>();
+builder.Services.AddSingleton<IApiKeyService, ApiKeyService>();
 
 var app = builder.Build();
 
@@ -48,6 +76,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseMiddleware<ApiKeyMiddleware>();
 
 app.MapControllers();
 
