@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using IoTBroker.Middleware;
 using IoTBroker.Rules;
+using IoTBroker.Rules.Actions;
 using IoTBroker.Rules.Strategies;
 using IoTBroker.Services;
 using Microsoft.OpenApi.Models;
@@ -30,6 +31,15 @@ builder.Services.AddSwaggerGen(c =>
         Title = "IoTBroker API",
         Version = "v1",
         Description = "API for IoTBroker"
+    });
+
+    c.UseAllOfForInheritance();
+    c.UseOneOfForPolymorphism();
+
+    c.SelectSubTypesUsing(baseType =>
+    {
+        if (baseType == typeof(IRuleAction)) return new[] { typeof(SetDeviceValueAction) };
+        return Enumerable.Empty<Type>();
     });
 
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme

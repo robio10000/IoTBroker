@@ -40,7 +40,7 @@ public class ClientsController : ControllerBase
         var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
         return client != null && client.Roles.Contains("Admin");
     }
-    
+
     /// <summary>
     ///     Check if the authenticated client matches the given client ID
     /// </summary>
@@ -51,9 +51,10 @@ public class ClientsController : ControllerBase
         var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
         return client != null && client.Id == clientId;
     }
-    
+
+    // TODO: *1 Centralize client ID retrieval
     /// <summary>
-    /// Get the authenticated client's ID from the HttpContext
+    ///     Get the authenticated client's ID from the HttpContext
     /// </summary>
     /// <returns>Client ID as string</returns>
     private string GetClientId()
@@ -62,7 +63,7 @@ public class ClientsController : ControllerBase
         if (client == null) return string.Empty;
         return client.Id;
     }
-    
+
 
     /// <summary>
     ///     Get all registered API clients
@@ -71,14 +72,11 @@ public class ClientsController : ControllerBase
     [HttpGet]
     public IActionResult GetAll()
     {
-        if(!IsAuthorized(GetClientId()) && !IsAdmin())
+        if (!IsAuthorized(GetClientId()) && !IsAdmin())
             return StatusCode(403, "Forbidden: You cannot access other client profiles.");
-        
+
         var clients = _apiKeyService.GetAllClients();
-        if (!IsAdmin())
-        {
-            clients = clients.Where(c => c.Id == GetClientId());
-        }
+        if (!IsAdmin()) clients = clients.Where(c => c.Id == GetClientId());
         return Ok(clients);
     }
 

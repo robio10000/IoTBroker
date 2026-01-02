@@ -3,12 +3,20 @@ using IoTBroker.Services;
 
 namespace IoTBroker.Rules.Actions;
 
+/// <summary>
+///     Action to set a device's sensor value.
+/// </summary>
 public class SetDeviceValueAction : IRuleAction
 {
     public string TargetDeviceId { get; set; } = string.Empty;
     public string NewValue { get; set; } = string.Empty;
     public SensorType ValueType { get; set; }
 
+    /// <summary>
+    ///     Executes the action to set the device's sensor value.
+    /// </summary>
+    /// <param name="serviceProvider">Used to resolve services like ISensorService.</param>
+    /// <param name="clientId">The context of the client who owns the rule.</param>
     public void Execute(IServiceProvider serviceProvider, string clientId)
     {
         var sensorService = serviceProvider.GetRequiredService<ISensorService>();
