@@ -1,4 +1,3 @@
-using IoTBroker.Models;
 using IoTBroker.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,10 +37,10 @@ public class ClientsController : BaseApiController
     /// <returns>True if authorized, false otherwise</returns>
     private bool IsAuthorized(string clientId)
     {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        var client = AuthenticatedClient;
         return client != null && client.Id == clientId;
     }
-    
+
     /// <summary>
     ///     Get all registered API clients
     /// </summary>

@@ -9,20 +9,18 @@ namespace IoTBroker.Controllers;
 [ApiController]
 public abstract class BaseApiController : ControllerBase
 {
-    
     /// <summary>
     ///     Gets the authenticated ApiClient from the HttpContext items.
     /// </summary>
     protected ApiClient? AuthenticatedClient => HttpContext.Items["AuthenticatedClient"] as ApiClient;
-    
+
     /// <summary>
     ///     Gets the authenticated client's ID from the HttpContext items.
     /// </summary>
     /// <returns>The Client ID or string.Empty if not authenticated.</returns>
     protected string GetClientId()
     {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        return client?.Id ?? string.Empty;
+        return AuthenticatedClient?.Id ?? string.Empty;
     }
 
     /// <summary>
@@ -30,7 +28,6 @@ public abstract class BaseApiController : ControllerBase
     /// </summary>
     protected bool IsAdmin()
     {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        return client?.Roles.Contains("Admin") ?? false;
+        return AuthenticatedClient?.Roles.Contains("Admin") ?? false;
     }
 }

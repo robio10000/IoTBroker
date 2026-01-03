@@ -27,7 +27,7 @@ public class SensorController : BaseApiController
     public IActionResult CreateSensorData([FromBody] SensorPayload payload)
     {
         // Redundant authentication check
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        var client = AuthenticatedClient;
         if (client == null)
             return Unauthorized("You must be authenticated to submit sensor data.");
 
@@ -61,8 +61,8 @@ public class SensorController : BaseApiController
     public IActionResult GetAllSensorData()
     {
         // Admin check
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        if (client != null && client.Roles.Contains("Admin"))
+        var client = AuthenticatedClient;
+        if (client != null && IsAdmin())
             return Ok(_sensorService.GetAll(null));
 
         return Ok(_sensorService.GetAll(GetClientId()));
@@ -124,11 +124,11 @@ public class SensorController : BaseApiController
 
     private bool IsAuthorized(string deviceId)
     {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        var client = AuthenticatedClient;
         if (client == null) return false;
 
         // Admin can do everything
-        if (client.Roles.Contains("Admin")) return true;
+        if (IsAdmin()) return true;
 
         // User can only access their own devices
         return client.OwnedDevices.Contains(deviceId);
