@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using IoTBroker.Models;
 using IoTBroker.Rules.Models;
 using IoTBroker.Rules.Strategies;
+using IoTBroker.Services;
 
 namespace IoTBroker.Rules;
 
@@ -59,24 +60,65 @@ public class RuleService : IRuleService
     /// <param name="payload">The sensor payload containing the data to evaluate.</param>
     public void ExecuteRules(string clientId, SensorPayload payload)
     {
-        // 1. Search for all active rules for this client and device
-        var matchingRules = _rules.Values
+        // 1. Search for relevant rules for the client and device in any condition
+        var relevantRules = _rules.Values
             .Where(r => r.ClientId == clientId &&
-                        r.TriggerDeviceId == payload.DeviceId &&
-                        r.IsActive);
+                        r.IsActive &&
+                        r.Conditions.Any(c => c.DeviceId == payload.DeviceId))
+            .ToList();
+        
+        var sensorService = _serviceProvider.GetRequiredService<ISensorService>();
 
-        foreach (var rule in matchingRules)
+        foreach (var rule in relevantRules)
         {
-            // 2. Find the appropriate strategy for the sensor type (Numeric, String, etc.)
-            var strategy = _strategies.FirstOrDefault(s => s.SupportedType == payload.Type);
+            // Initial status depending on logical operator
+            // All -> true, Any -> false
+            var isTriggered = rule.LogicalOperator == LogicalOperator.All;
 
-            if (strategy == null) continue;
+            foreach (var condition in rule.Conditions)
+            {
+                var conditionMet = false;
 
-            // 3. Evaluate the condition
-            if (strategy.Evaluate(payload.Value, rule.Operator, rule.ThresholdValue, rule.IgnoreCase))
-                // 4. Execute all linked actions
-                foreach (var action in rule.Actions)
-                    action.Execute(_serviceProvider, clientId);
+                // If the device in the condition is the currently sending device -> use payload
+                if (condition.DeviceId == payload.DeviceId)
+                {
+                    conditionMet = EvaluateCondition(condition, payload.Value, payload.Type);
+                }
+                else
+                {
+                    // If the device in the condition is different -> fetch last state from SensorService
+                    // Use the ServiceProvider to avoid circular dependency
+                    var lastState = sensorService.GetById(clientId, condition.DeviceId);
+
+                    if (lastState != null) conditionMet = EvaluateCondition(condition, lastState.Value, lastState.Type);
+                }
+
+                // Linking the results
+                if (rule.LogicalOperator == LogicalOperator.All)
+                {
+                    isTriggered &= conditionMet;
+                    if (!isTriggered) break; // AND: Once false, all false -> break
+                }
+                else
+                {
+                    isTriggered |= conditionMet;
+                    if (isTriggered) break; // OR: Once true, all true -> break
+                }
+            }
+
+            if (isTriggered)
+            {
+                rule.LastTriggered = DateTime.UtcNow;
+                foreach (var action in rule.Actions) action.Execute(_serviceProvider, clientId);
+            }
         }
+    }
+
+    private bool EvaluateCondition(RuleCondition condition, string value, SensorType type)
+    {
+        var strategy = _strategies.FirstOrDefault(s => s.SupportedType == type);
+        if (strategy == null) return false;
+
+        return strategy.Evaluate(value, condition.Operator, condition.ThresholdValue, condition.IgnoreCase);
     }
 }

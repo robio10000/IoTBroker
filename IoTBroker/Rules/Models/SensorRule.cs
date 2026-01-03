@@ -15,17 +15,15 @@ public class SensorRule
 
     public string Name { get; set; } = string.Empty;
 
-    // Trigger context
-    public string TriggerDeviceId { get; set; } = string.Empty;
+    public List<RuleCondition> Conditions { get; set; } = new();
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public ComparisonOperator Operator { get; set; }
-
-    public string ThresholdValue { get; set; } = string.Empty;
-    public bool IgnoreCase { get; set; }
+    public LogicalOperator LogicalOperator { get; set; } = LogicalOperator.All;
 
     // What should happen?
     public List<IRuleAction> Actions { get; set; } = new();
 
     public bool IsActive { get; set; } = true;
+
+    [ReadOnly(true)] public DateTime? LastTriggered { get; set; }
 }
