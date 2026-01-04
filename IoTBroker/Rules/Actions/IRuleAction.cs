@@ -7,6 +7,7 @@ namespace IoTBroker.Rules.Actions;
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(SetDeviceValueAction), "set_value")]
+[JsonDerivedType(typeof(WebHookAction), "webhook")]
 public interface IRuleAction
 {
     /// <summary>

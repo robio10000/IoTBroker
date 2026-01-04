@@ -23,6 +23,7 @@ builder.Services.AddControllers()
         // Allow enum values as strings in JSON
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -38,7 +39,7 @@ builder.Services.AddSwaggerGen(c =>
 
     c.SelectSubTypesUsing(baseType =>
     {
-        if (baseType == typeof(IRuleAction)) return new[] { typeof(SetDeviceValueAction) };
+        if (baseType == typeof(IRuleAction)) return new[] {typeof(SetDeviceValueAction), typeof(WebHookAction) };
         return Enumerable.Empty<Type>();
     });
 
