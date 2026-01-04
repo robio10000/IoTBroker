@@ -1,4 +1,3 @@
-using IoTBroker.Models;
 using IoTBroker.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +13,7 @@ public record CreateClientRequest(string Name, List<string> Roles, HashSet<strin
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ClientsController : ControllerBase
+public class ClientsController : BaseApiController
 {
     private readonly IApiKeyService _apiKeyService;
 
@@ -32,37 +31,15 @@ public class ClientsController : ControllerBase
     }
 
     /// <summary>
-    ///     Check if the authenticated client has Admin role
-    /// </summary>
-    /// <returns>True if client is admin, false otherwise</returns>
-    private bool IsAdmin()
-    {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        return client != null && client.Roles.Contains("Admin");
-    }
-    
-    /// <summary>
     ///     Check if the authenticated client matches the given client ID
     /// </summary>
     /// <param name="clientId">The client ID to check against</param>
     /// <returns>True if authorized, false otherwise</returns>
     private bool IsAuthorized(string clientId)
     {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
+        var client = AuthenticatedClient;
         return client != null && client.Id == clientId;
     }
-    
-    /// <summary>
-    /// Get the authenticated client's ID from the HttpContext
-    /// </summary>
-    /// <returns>Client ID as string</returns>
-    private string GetClientId()
-    {
-        var client = HttpContext.Items["AuthenticatedClient"] as ApiClient;
-        if (client == null) return string.Empty;
-        return client.Id;
-    }
-    
 
     /// <summary>
     ///     Get all registered API clients
@@ -71,14 +48,11 @@ public class ClientsController : ControllerBase
     [HttpGet]
     public IActionResult GetAll()
     {
-        if(!IsAuthorized(GetClientId()) && !IsAdmin())
+        if (!IsAuthorized(GetClientId()) && !IsAdmin())
             return StatusCode(403, "Forbidden: You cannot access other client profiles.");
-        
+
         var clients = _apiKeyService.GetAllClients();
-        if (!IsAdmin())
-        {
-            clients = clients.Where(c => c.Id == GetClientId());
-        }
+        if (!IsAdmin()) clients = clients.Where(c => c.Id == GetClientId());
         return Ok(clients);
     }
 
