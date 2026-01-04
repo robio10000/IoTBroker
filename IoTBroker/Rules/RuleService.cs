@@ -109,7 +109,7 @@ public class RuleService : IRuleService
             if (isTriggered)
             {
                 rule.LastTriggered = DateTime.UtcNow;
-                foreach (var action in rule.Actions) action.Execute(_serviceProvider, clientId);
+                foreach (var action in rule.Actions) action.Execute(_serviceProvider, clientId, payload, rule);
             }
         }
     }

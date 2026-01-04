@@ -1,4 +1,6 @@
 using System.Text.Json.Serialization;
+using IoTBroker.Models;
+using IoTBroker.Rules.Models;
 
 namespace IoTBroker.Rules.Actions;
 
@@ -15,5 +17,7 @@ public interface IRuleAction
     /// </summary>
     /// <param name="serviceProvider">Used to resolve services like ISensorService.</param>
     /// <param name="clientId">The context of the client who owns the rule.</param>
-    void Execute(IServiceProvider serviceProvider, string clientId);
+    /// <param name="triggerPayload">The payload that triggered the rule.</param>
+    /// <param name="rule">The rule that triggered this action.</param>
+    void Execute(IServiceProvider serviceProvider, string clientId, SensorPayload triggerPayload, SensorRule rule);
 }

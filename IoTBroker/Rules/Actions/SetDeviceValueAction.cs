@@ -1,4 +1,5 @@
 using IoTBroker.Models;
+using IoTBroker.Rules.Models;
 using IoTBroker.Services;
 
 namespace IoTBroker.Rules.Actions;
@@ -17,7 +18,9 @@ public class SetDeviceValueAction : IRuleAction
     /// </summary>
     /// <param name="serviceProvider">Used to resolve services like ISensorService.</param>
     /// <param name="clientId">The context of the client who owns the rule.</param>
-    public void Execute(IServiceProvider serviceProvider, string clientId)
+    /// <param name="triggerPayload">The payload that triggered the rule.</param>
+    /// <param name="rule">The rule that triggered this action.</param>
+    public void Execute(IServiceProvider serviceProvider, string clientId, SensorPayload triggerPayload, SensorRule rule)
     {
         var sensorService = serviceProvider.GetRequiredService<ISensorService>();
 
