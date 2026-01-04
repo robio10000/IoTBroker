@@ -1,4 +1,5 @@
 using IoTBroker.Models;
+using IoTBroker.Rules.Helper;
 using IoTBroker.Rules.Models;
 using IoTBroker.Services;
 
@@ -23,12 +24,14 @@ public class SetDeviceValueAction : IRuleAction
     public void Execute(IServiceProvider serviceProvider, string clientId, SensorPayload triggerPayload, SensorRule rule)
     {
         var sensorService = serviceProvider.GetRequiredService<ISensorService>();
+        
+        var finalValue = TokenReplacer.Replace(NewValue, triggerPayload, rule);
 
         var payload = new SensorPayload
         {
             DeviceId = TargetDeviceId,
             Type = ValueType,
-            Value = NewValue,
+            Value = finalValue ?? NewValue,
             Timestamp = DateTime.UtcNow
         };
 

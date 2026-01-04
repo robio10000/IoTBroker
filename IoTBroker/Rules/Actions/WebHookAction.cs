@@ -1,5 +1,6 @@
 using System.Text;
 using IoTBroker.Models;
+using IoTBroker.Rules.Helper;
 using IoTBroker.Rules.Models;
 
 namespace IoTBroker.Rules.Actions;
@@ -26,9 +27,9 @@ public class WebHookAction : IRuleAction
         var client = httpClientFactory.CreateClient();
         
         // Replace tokens in URL and Payload
-        string finalUrl = ReplaceTokens(Url, triggerPayload, rule);
+        string finalUrl = TokenReplacer.Replace(Url, triggerPayload, rule);
         string? finalPayload = !string.IsNullOrEmpty(PayloadTemplate) 
-            ? ReplaceTokens(PayloadTemplate, triggerPayload, rule) 
+            ? TokenReplacer.Replace(PayloadTemplate, triggerPayload, rule) 
             : null;
 
         try
@@ -40,30 +41,12 @@ public class WebHookAction : IRuleAction
                 request.Content = new StringContent(finalPayload, Encoding.UTF8, "application/json");
             }
 
-            // Send it and log errors only internally (or via Console for testing)
             var response = await client.SendAsync(request);
             Console.WriteLine($"[WebHook] {Method} to {finalUrl} returned {response.StatusCode}");
-            
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[WebHook] Error calling {finalUrl}: {ex.Message}");
         }
-    }
-    
-    private string ReplaceTokens(string template, SensorPayload payload, SensorRule rule)
-    {
-        var result = template
-            .Replace("{rule.name}", rule.Name)
-            .Replace("{rule.id}", rule.Id)
-            .Replace("{device}", payload.DeviceId)
-            .Replace("{value}", payload.Value)
-            .Replace("{timestamp}", DateTime.UtcNow.ToString("O"))
-            .Replace("{value.type}", payload.Type.ToString());
-
-        var conditionsSummary = string.Join(", ", rule.Conditions.Select(c => $"{c.DeviceId} {c.Operator} {c.ThresholdValue}"));
-        result = result.Replace("{rule.conditions}", conditionsSummary);
-
-        return result;
     }
 }
