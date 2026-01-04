@@ -13,6 +13,8 @@ public class WebHookAction : IRuleAction
     public string Url { get; set; } = string.Empty;
     public string Method { get; set; } = "POST"; // GET, POST, PUT
     public string? PayloadTemplate { get; set; }
+    
+    public Dictionary<string, string> Headers { get; set; } = new();
 
     /// <summary>
     ///     Executes the WebHook action.
@@ -35,6 +37,12 @@ public class WebHookAction : IRuleAction
         try
         {
             var request = new HttpRequestMessage(new HttpMethod(Method), finalUrl);
+
+            foreach (var header in Headers)
+            {
+                var replacedValue = TokenReplacer.Replace(header.Value, triggerPayload, rule);
+                request.Headers.TryAddWithoutValidation(header.Key, replacedValue);
+            }
 
             if (finalPayload != null && Method != "GET")
             {
