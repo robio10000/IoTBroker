@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace IoTBroker.Domain;
 
+/// <summary>
+///     Represents the payload sent by a sensor device.
+/// </summary>
 public class SensorPayload
 {
     [Required]

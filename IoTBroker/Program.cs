@@ -5,6 +5,8 @@ using IoTBroker.Features.Rules;
 using IoTBroker.Features.Rules.Actions;
 using IoTBroker.Features.Rules.Strategies;
 using IoTBroker.Features.Sensors;
+using IoTBroker.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 /// <summary>
@@ -79,6 +81,11 @@ builder.Services.AddSingleton<ITriggerStrategy, BooleanTriggerStrategy>();
 builder.Services.AddSingleton<ITriggerStrategy, StringTriggerStrategy>();
 
 builder.Services.AddSingleton<IRuleService, RuleService>();
+
+// TODO: Use configuration for connection string.
+// TODO: And Switch case for different DB providers (InMemory, SQLite MySQL, PostgeSQL) from appsettings.
+builder.Services.AddDbContext<IoTContext>(options =>
+    options.UseSqlite("Data Source=iotbroker.db"));
 
 var app = builder.Build();
 

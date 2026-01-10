@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace IoTBroker.Domain;
 
 /// <summary>
@@ -5,6 +7,8 @@ namespace IoTBroker.Domain;
 /// </summary>
 public class ApiClient
 {
+    [Key]
+    [Length(32, maximumLength: 32)]
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
