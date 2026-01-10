@@ -1,7 +1,7 @@
-using IoTBroker.Services;
+using IoTBroker.Features.Clients;
 using Microsoft.AspNetCore.Mvc;
 
-namespace IoTBroker.Controllers;
+namespace IoTBroker.API.Controllers;
 
 /// <summary>
 ///     Request model for creating a new API client

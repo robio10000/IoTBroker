@@ -1,9 +1,9 @@
-using IoTBroker.Models;
-using IoTBroker.Rules.Helper;
-using IoTBroker.Rules.Models;
-using IoTBroker.Services;
+using IoTBroker.Domain;
+using IoTBroker.Features.Rules.Helper;
+using IoTBroker.Features.Rules.Models;
+using IoTBroker.Features.Sensors;
 
-namespace IoTBroker.Rules.Actions;
+namespace IoTBroker.Features.Rules.Actions;
 
 /// <summary>
 ///     Action to set a device's sensor value.

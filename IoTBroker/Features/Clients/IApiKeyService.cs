@@ -1,6 +1,7 @@
-using IoTBroker.Models;
+using IoTBroker.Domain;
+using IoTBroker.Features.Sensors;
 
-namespace IoTBroker.Services;
+namespace IoTBroker.Features.Clients;
 
 /// <summary>
 ///     Service interface for managing API keys and clients

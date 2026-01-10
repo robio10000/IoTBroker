@@ -1,8 +1,8 @@
-using IoTBroker.Models;
-using IoTBroker.Services;
+using IoTBroker.Domain;
+using IoTBroker.Features.Sensors;
 using Microsoft.AspNetCore.Mvc;
 
-namespace IoTBroker.Controllers;
+namespace IoTBroker.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

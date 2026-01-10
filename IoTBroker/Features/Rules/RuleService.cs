@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using IoTBroker.Models;
-using IoTBroker.Rules.Models;
-using IoTBroker.Rules.Strategies;
-using IoTBroker.Services;
+using IoTBroker.Domain;
+using IoTBroker.Features.Rules.Models;
+using IoTBroker.Features.Rules.Strategies;
+using IoTBroker.Features.Sensors;
 
-namespace IoTBroker.Rules;
+namespace IoTBroker.Features.Rules;
 
 /// <summary>
 ///     Service for managing and executing sensor rules.

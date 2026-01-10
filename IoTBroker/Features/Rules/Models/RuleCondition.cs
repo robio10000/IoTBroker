@@ -1,4 +1,4 @@
-namespace IoTBroker.Rules.Models;
+namespace IoTBroker.Features.Rules.Models;
 
 /// <summary>
 ///     Represents a condition that must be met for a rule to trigger.

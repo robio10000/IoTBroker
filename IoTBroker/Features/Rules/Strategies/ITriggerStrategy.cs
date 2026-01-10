@@ -1,7 +1,7 @@
-using IoTBroker.Models;
-using IoTBroker.Rules.Models;
+using IoTBroker.Domain;
+using IoTBroker.Features.Rules.Models;
 
-namespace IoTBroker.Rules.Strategies;
+namespace IoTBroker.Features.Rules.Strategies;
 
 /// <summary>
 ///     Together with the Strategy Pattern, this interface defines how different trigger strategies should behave.

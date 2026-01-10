@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
-using IoTBroker.Models;
-using IoTBroker.Rules;
+using IoTBroker.Domain;
+using IoTBroker.Features.Clients;
+using IoTBroker.Features.Rules;
 
-namespace IoTBroker.Services;
+namespace IoTBroker.Features.Sensors;
 
 public class SensorService : ISensorService
 {

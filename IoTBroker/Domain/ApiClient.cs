@@ -1,4 +1,4 @@
-namespace IoTBroker.Models;
+namespace IoTBroker.Domain;
 
 /// <summary>
 ///     Represents an API client with associated roles and owned devices.

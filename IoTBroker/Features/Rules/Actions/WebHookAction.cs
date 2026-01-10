@@ -1,9 +1,9 @@
 using System.Text;
-using IoTBroker.Models;
-using IoTBroker.Rules.Helper;
-using IoTBroker.Rules.Models;
+using IoTBroker.Domain;
+using IoTBroker.Features.Rules.Helper;
+using IoTBroker.Features.Rules.Models;
 
-namespace IoTBroker.Rules.Actions;
+namespace IoTBroker.Features.Rules.Actions;
 
 /// <summary>
 ///     Action to call a WebHook URL.

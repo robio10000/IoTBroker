@@ -1,9 +1,10 @@
 using System.Text.Json.Serialization;
-using IoTBroker.Middleware;
-using IoTBroker.Rules;
-using IoTBroker.Rules.Actions;
-using IoTBroker.Rules.Strategies;
-using IoTBroker.Services;
+using IoTBroker.API.Middleware;
+using IoTBroker.Features.Clients;
+using IoTBroker.Features.Rules;
+using IoTBroker.Features.Rules.Actions;
+using IoTBroker.Features.Rules.Strategies;
+using IoTBroker.Features.Sensors;
 using Microsoft.OpenApi.Models;
 
 /// <summary>

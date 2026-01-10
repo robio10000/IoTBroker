@@ -1,7 +1,8 @@
 using System.Collections.Concurrent;
-using IoTBroker.Models;
+using IoTBroker.Domain;
+using IoTBroker.Features.Sensors;
 
-namespace IoTBroker.Services;
+namespace IoTBroker.Features.Clients;
 
 /// <summary>
 ///     Service to manage API clients and their API keys

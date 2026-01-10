@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
-using IoTBroker.Models;
-using IoTBroker.Rules.Models;
+using IoTBroker.Domain;
+using IoTBroker.Features.Rules.Models;
 
-namespace IoTBroker.Rules.Actions;
+namespace IoTBroker.Features.Rules.Actions;
 
 /// <summary>
 ///     Defines an action that can be executed when a rule trigger is met.

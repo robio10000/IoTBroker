@@ -1,7 +1,7 @@
-using IoTBroker.Models;
-using IoTBroker.Rules.Models;
+using IoTBroker.Domain;
+using IoTBroker.Features.Rules.Models;
 
-namespace IoTBroker.Rules;
+namespace IoTBroker.Features.Rules;
 
 /// <summary>
 /// Service interface for managing and executing sensor rules.

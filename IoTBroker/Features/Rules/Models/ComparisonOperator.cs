@@ -1,4 +1,4 @@
-namespace IoTBroker.Rules.Models;
+namespace IoTBroker.Features.Rules.Models;
 
 /// <summary>
 ///     Comparison operators for rule evaluations.

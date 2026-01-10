@@ -1,7 +1,7 @@
-using IoTBroker.Models;
-using IoTBroker.Rules.Models;
+using IoTBroker.Domain;
+using IoTBroker.Features.Rules.Models;
 
-namespace IoTBroker.Rules.Helper;
+namespace IoTBroker.Features.Rules.Helper;
 
 /// <summary>
 ///     Utility class for replacing tokens in templates with actual values from sensor payloads and rules.

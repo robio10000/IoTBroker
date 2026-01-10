@@ -1,9 +1,8 @@
-using IoTBroker.Models;
-using IoTBroker.Rules;
-using IoTBroker.Rules.Models;
+using IoTBroker.Features.Rules;
+using IoTBroker.Features.Rules.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace IoTBroker.Controllers;
+namespace IoTBroker.API.Controllers;
 
 /// <summary>
 ///     Controller to manage sensor rules

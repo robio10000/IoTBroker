@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace IoTBroker.Models;
+namespace IoTBroker.Domain;
 
 public class SensorPayload
 {

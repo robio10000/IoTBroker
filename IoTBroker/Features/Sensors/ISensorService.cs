@@ -1,6 +1,6 @@
-using IoTBroker.Models;
+using IoTBroker.Domain;
 
-namespace IoTBroker.Services;
+namespace IoTBroker.Features.Sensors;
 
 /// <summary>
 ///     Result of a service operation

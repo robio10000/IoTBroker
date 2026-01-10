@@ -1,6 +1,6 @@
-using IoTBroker.Services;
+using IoTBroker.Features.Clients;
 
-namespace IoTBroker.Middleware;
+namespace IoTBroker.API.Middleware;
 
 /// <summary>
 ///     Middleware to handle API Key authentication

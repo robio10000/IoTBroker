@@ -1,7 +1,7 @@
-using IoTBroker.Models;
+using IoTBroker.Domain;
 using Microsoft.AspNetCore.Mvc;
 
-namespace IoTBroker.Controllers;
+namespace IoTBroker.API.Controllers;
 
 /// <summary>
 ///     Base API controller providing common functionality for derived controllers.

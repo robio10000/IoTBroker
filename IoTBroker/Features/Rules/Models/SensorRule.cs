@@ -1,8 +1,8 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
-using IoTBroker.Rules.Actions;
+using IoTBroker.Features.Rules.Actions;
 
-namespace IoTBroker.Rules.Models;
+namespace IoTBroker.Features.Rules.Models;
 
 /// <summary>
 ///     Represents a complete rule consisting of a trigger condition and associated actions.
