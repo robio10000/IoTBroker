@@ -73,14 +73,14 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddSingleton<ISensorService, SensorService>();
-builder.Services.AddSingleton<IApiKeyService, ApiKeyService>();
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 
-builder.Services.AddSingleton<ITriggerStrategy, NumericTriggerStrategy>();
-builder.Services.AddSingleton<ITriggerStrategy, BooleanTriggerStrategy>();
-builder.Services.AddSingleton<ITriggerStrategy, StringTriggerStrategy>();
+builder.Services.AddScoped<ITriggerStrategy, NumericTriggerStrategy>();
+builder.Services.AddScoped<ITriggerStrategy, BooleanTriggerStrategy>();
+builder.Services.AddScoped<ITriggerStrategy, StringTriggerStrategy>();
 
-builder.Services.AddSingleton<IRuleService, RuleService>();
+builder.Services.AddScoped<ISensorService, SensorService>();
+builder.Services.AddScoped<IRuleService, RuleService>();
 
 // TODO: Use configuration for connection string.
 // TODO: And Switch case for different DB providers (InMemory, SQLite MySQL, PostgeSQL) from appsettings.
