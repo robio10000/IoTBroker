@@ -29,11 +29,11 @@ public interface IRuleService
     /// <param name="ruleId">The identifier of the rule to delete.</param>
     /// <returns>True if the rule was successfully deleted; otherwise, false.</returns>
     bool DeleteRule(string clientId, string ruleId);
-    
+
     /// <summary>
     /// Evaluates and executes rules based on the incoming sensor payload.
     /// </summary>
     /// <param name="clientId">The client identifier.</param>
     /// <param name="payload">The sensor payload containing the data to evaluate.</param>
-    void ExecuteRules(string clientId, SensorPayload payload);
+    Task ExecuteRules(string clientId, SensorPayload payload);
 }

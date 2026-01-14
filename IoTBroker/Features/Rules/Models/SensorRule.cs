@@ -21,7 +21,7 @@ public class SensorRule
     public LogicalOperator LogicalOperator { get; set; } = LogicalOperator.All;
 
     // What should happen?
-    public List<IRuleAction> Actions { get; set; } = new();
+    public List<RuleAction> Actions { get; set; } = new();
 
     public bool IsActive { get; set; } = true;
 

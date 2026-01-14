@@ -1,23 +1,27 @@
-using System.Collections.Concurrent;
 using IoTBroker.Domain;
 using IoTBroker.Features.Clients;
 using IoTBroker.Features.Rules;
+using IoTBroker.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace IoTBroker.Features.Sensors;
 
 public class SensorService : ISensorService
 {
     private readonly IApiKeyService _apiKeyService;
+    private readonly IoTContext _context;
     private readonly ILogger<SensorService> _logger;
     private readonly IRuleService _ruleService;
 
-    private readonly ConcurrentDictionary<string, List<SensorPayload>> _store = new();
+    //private readonly ConcurrentDictionary<string, List<SensorPayload>> _store = new();
 
-    public SensorService(ILogger<SensorService> logger, IApiKeyService apiKeyService, IRuleService ruleService)
+    public SensorService(ILogger<SensorService> logger, IApiKeyService apiKeyService, IRuleService ruleService,
+        IoTContext context)
     {
         _logger = logger;
         _apiKeyService = apiKeyService;
         _ruleService = ruleService;
+        _context = context;
     }
 
     /// <summary>
@@ -25,32 +29,19 @@ public class SensorService : ISensorService
     /// </summary>
     /// <param name="clientId">The client ID to filter by (optional)</param>
     /// <returns>Enumerable of all sensor payloads</returns>
-    public IEnumerable<SensorPayload> GetAll(string? clientId)
+    public async Task<IEnumerable<SensorPayload>> GetAll(string? clientId)
     {
         // If no clientId is provided, return all payloads
         if (clientId == null)
-        {
-            var allData = new List<SensorPayload>();
-
-            foreach (var entry in _store)
-                lock (entry.Value)
-                {
-                    allData.AddRange(entry.Value);
-                }
-
-            return allData.OrderByDescending(x => x.Timestamp);
-        }
+            return await _context.Payloads
+                .OrderByDescending(x => x.Timestamp)
+                .ToListAsync();
 
         // Filter payloads by clientId
-        var filteredData = new List<SensorPayload>();
-        foreach (var entry in _store)
-            if (entry.Key.StartsWith(clientId + "_"))
-                lock (entry.Value)
-                {
-                    filteredData.AddRange(entry.Value);
-                }
-
-        return filteredData.OrderByDescending(x => x.Timestamp);
+        return await _context.Payloads
+            .Where(p => p.DeviceId.StartsWith(clientId + "_"))
+            .OrderByDescending(x => x.Timestamp)
+            .ToListAsync();
     }
 
     /// <summary>
@@ -59,17 +50,14 @@ public class SensorService : ISensorService
     /// <param name="clientId">The client ID</param>
     /// <param name="id">The sensor device id</param>
     /// <returns>The latest sensor payload or null if not found</returns>
-    public SensorPayload? GetById(string clientId, string id)
+    public async Task<SensorPayload?> GetById(string clientId, string id)
     {
         var internalKey = GetInternalKey(clientId, id);
 
-        if (_store.TryGetValue(internalKey, out var history))
-            lock (history)
-            {
-                return history.OrderByDescending(x => x.Timestamp).FirstOrDefault();
-            }
-
-        return null;
+        return await _context.Payloads
+            .Where(p => p.DeviceId == internalKey)
+            .OrderByDescending(p => p.Timestamp)
+            .FirstOrDefaultAsync();
     }
 
     /// <summary>
@@ -78,17 +66,14 @@ public class SensorService : ISensorService
     /// <param name="clientId">The client ID</param>
     /// <param name="id">The sensor device id</param>
     /// <returns>Enumerable of sensor payloads</returns>
-    public IEnumerable<SensorPayload> GetHistoryById(string clientId, string id)
+    public async Task<IEnumerable<SensorPayload>> GetHistoryById(string clientId, string id)
     {
         var internalKey = GetInternalKey(clientId, id);
 
-        if (_store.TryGetValue(internalKey, out var history))
-            lock (history)
-            {
-                return history.OrderByDescending(x => x.Timestamp).ToList();
-            }
-
-        return Enumerable.Empty<SensorPayload>();
+        return await _context.Payloads
+            .Where(p => p.DeviceId == internalKey)
+            .OrderByDescending(p => p.Timestamp)
+            .ToListAsync();
     }
 
     /// <summary>
@@ -97,10 +82,10 @@ public class SensorService : ISensorService
     /// <param name="clientId">The client ID</param>
     /// <param name="id">The sensor id</param>
     /// <returns>True if exists, false otherwise</returns>
-    public bool Exists(string clientId, string id)
+    public async Task<bool> Exists(string clientId, string id)
     {
         var internalKey = GetInternalKey(clientId, id);
-        return _store.ContainsKey(internalKey);
+        return await _context.Payloads.AnyAsync(p => p.DeviceId == internalKey);
     }
 
     /// <summary>
@@ -109,10 +94,14 @@ public class SensorService : ISensorService
     /// <param name="clientId">The client ID</param>
     /// <param name="id">The sensor id</param>
     /// <returns>True if deleted, false otherwise</returns>
-    public bool Delete(string clientId, string id)
+    public async Task<bool> Delete(string clientId, string id)
     {
         var internalKey = GetInternalKey(clientId, id);
-        return _store.TryRemove(internalKey, out _);
+        var payloads = await _context.Payloads.Where(p => p.DeviceId == internalKey).ToListAsync();
+        if (!payloads.Any()) return false;
+        _context.Payloads.RemoveRange(payloads);
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     /// <summary>
@@ -122,32 +111,50 @@ public class SensorService : ISensorService
     /// <param name="payload">The sensor payload</param>
     /// <param name="isGeneratedByRule">Indicates if the payload was generated by a rule</param>
     /// <returns>ServiceResult indicating success or failure</returns>
-    public ServiceResult ProcessPayload(string clientId, SensorPayload payload, bool isGeneratedByRule = false)
+    public async Task<ServiceResult> ProcessPayload(string clientId, SensorPayload payload,
+        bool isGeneratedByRule = false)
     {
         // 1. Validation of the payload
         var validation = ValidateValue(payload);
-        if (!validation.Success) return validation;
-
-        // Ensure the device is registered to the client
-        _apiKeyService.AddDeviceToClient(clientId, payload.DeviceId);
-
-        // 2. Get or create the device history list
-        var internalKey = GetInternalKey(clientId, payload.DeviceId);
-        var deviceHistory = _store.GetOrAdd(internalKey, _ => new List<SensorPayload>());
-
-        // 3. Thread-safe addition to the device history
-        lock (deviceHistory)
+        if (!validation.Success)
         {
-            // Check for duplicate timestamps
-            if (deviceHistory.Any(x => x.Timestamp == payload.Timestamp))
-                return new ServiceResult(false, "Data for this timestamp already exists.");
-
-            deviceHistory.Add(payload);
+            _logger.LogWarning(
+                $"Payload validation failed for device {payload.DeviceId} by client {clientId}: {validation.Message}");
+            return validation;
         }
 
-        if (!isGeneratedByRule) _ruleService.ExecuteRules(clientId, payload);
+        // 2. Save history
+        _context.Payloads.Add(payload);
+
+        // 3. Ensure the device is registered to the client
+        _apiKeyService.AddDeviceToClient(clientId, payload.DeviceId);
+
+        // 4. Get or create the device history list
+        var state = await _context.DeviceStates
+            .FirstOrDefaultAsync(s => s.ClientId == clientId && s.DeviceId == payload.DeviceId);
+
+        // 5. Update or create the current device state
+        if (state == null)
+        {
+            _context.DeviceStates.Add(new DeviceState
+            {
+                ClientId = clientId,
+                DeviceId = payload.DeviceId,
+                Value = payload.Value,
+                Type = payload.Type,
+                LastUpdate = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            state.Value = payload.Value;
+            state.LastUpdate = DateTime.UtcNow;
+        }
+
+        if (!isGeneratedByRule) await _ruleService.ExecuteRules(clientId, payload);
 
         _logger.LogInformation($"Data processed for device {payload.DeviceId} by client {clientId}.");
+        await _context.SaveChangesAsync();
         return new ServiceResult(true);
     }
 

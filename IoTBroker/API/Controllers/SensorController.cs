@@ -24,7 +24,7 @@ public class SensorController : BaseApiController
     /// <param name="payload">The sensor data payload</param>
     /// <returns>Action result indicating success or failure</returns>
     [HttpPost]
-    public IActionResult CreateSensorData([FromBody] SensorPayload payload)
+    public async Task<IActionResult> CreateSensorData([FromBody] SensorPayload payload)
     {
         // Redundant authentication check
         var client = AuthenticatedClient;
@@ -40,7 +40,7 @@ public class SensorController : BaseApiController
         if (string.IsNullOrWhiteSpace(payload.DeviceId))
             return BadRequest("DeviceId is required.");
 
-        var result = _sensorService.ProcessPayload(GetClientId(), payload);
+        var result = await _sensorService.ProcessPayload(GetClientId(), payload);
 
         // Service result check
         if (!result.Success)
@@ -58,14 +58,14 @@ public class SensorController : BaseApiController
     /// </summary>
     /// <returns>List of all sensor data</returns>
     [HttpGet]
-    public IActionResult GetAllSensorData()
+    public async Task<IActionResult> GetAllSensorData()
     {
         // Admin check
         var client = AuthenticatedClient;
         if (client != null && IsAdmin())
-            return Ok(_sensorService.GetAll(null));
+            return Ok(await _sensorService.GetAll(null));
 
-        return Ok(_sensorService.GetAll(GetClientId()));
+        return Ok(await _sensorService.GetAll(GetClientId()));
     }
 
     /// <summary>
@@ -74,13 +74,13 @@ public class SensorController : BaseApiController
     /// <param name="id">The sensor device id</param>
     /// <returns>Sensor data for the specified device id</returns>
     [HttpGet("{id}")]
-    public IActionResult GetSensorData(string id)
+    public async Task<IActionResult> GetSensorData(string id)
     {
         // User check
         if (!IsAuthorized(id))
             return StatusCode(403, "Forbidden: You do not own this device.");
 
-        var sensor = _sensorService.GetById(GetClientId(), id);
+        var sensor = await _sensorService.GetById(GetClientId(), id);
         if (sensor == null) return NotFound($"Device {id} not found.");
 
         return Ok(sensor);
@@ -92,13 +92,13 @@ public class SensorController : BaseApiController
     /// <param name="id">The sensor device id</param>
     /// <returns>Sensor history for the specified device id</returns>
     [HttpGet("{id}/history")]
-    public IActionResult GetSensorHistory(string id)
+    public async Task<IActionResult> GetSensorHistory(string id)
     {
         // User check
         if (!IsAuthorized(id))
             return StatusCode(403, "Forbidden: You do not own this device.");
 
-        var history = _sensorService.GetHistoryById(GetClientId(), id);
+        var history = await _sensorService.GetHistoryById(GetClientId(), id);
         if (!history.Any()) return NotFound($"No history found for device {id}.");
 
         return Ok(history);
@@ -110,13 +110,13 @@ public class SensorController : BaseApiController
     /// <param name="id">The sensor device id</param>
     /// <returns>Action result indicating success or failure</returns>
     [HttpDelete("{id}")]
-    public IActionResult DeleteSensorData(string id)
+    public async Task<IActionResult> DeleteSensorData(string id)
     {
         // User check
         if (!IsAuthorized(id))
             return StatusCode(403, "Forbidden: You do not own this device.");
 
-        if (!_sensorService.Delete(GetClientId(), id)) return NotFound($"Device {id} not found.");
+        if (!await _sensorService.Delete(GetClientId(), id)) return NotFound($"Device {id} not found.");
 
         _logger.LogWarning("Deleted history for device {DeviceId}", id);
         return NoContent();
