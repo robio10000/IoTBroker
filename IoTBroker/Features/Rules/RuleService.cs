@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using IoTBroker.Domain;
 using IoTBroker.Features.Rules.Models;
 using IoTBroker.Features.Rules.Strategies;
@@ -13,7 +12,6 @@ namespace IoTBroker.Features.Rules;
 /// </summary>
 public class RuleService : IRuleService
 {
-    //private readonly ConcurrentDictionary<string, SensorRule> _rules = new();
     private readonly IoTContext _context;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEnumerable<ITriggerStrategy> _strategies;
