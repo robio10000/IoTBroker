@@ -3,6 +3,8 @@ using IoTBroker.Domain;
 using IoTBroker.Features.Rules.Models;
 using IoTBroker.Features.Rules.Strategies;
 using IoTBroker.Features.Sensors;
+using IoTBroker.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace IoTBroker.Features.Rules;
 
@@ -11,23 +13,26 @@ namespace IoTBroker.Features.Rules;
 /// </summary>
 public class RuleService : IRuleService
 {
-    private readonly ConcurrentDictionary<string, SensorRule> _rules = new();
+    //private readonly ConcurrentDictionary<string, SensorRule> _rules = new();
+    private readonly IoTContext _context;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEnumerable<ITriggerStrategy> _strategies;
 
-    public RuleService(IEnumerable<ITriggerStrategy> strategies, IServiceProvider serviceProvider)
+    public RuleService(IEnumerable<ITriggerStrategy> strategies, IServiceProvider serviceProvider, IoTContext context)
     {
         _strategies = strategies;
         _serviceProvider = serviceProvider;
+        _context = context;
     }
 
     /// <summary>
     ///     Adds a new sensor rule.
     /// </summary>
     /// <param name="rule">The sensor rule to add.</param>
-    public void AddRule(SensorRule rule)
+    public async Task AddRule(SensorRule rule)
     {
-        _rules.TryAdd(rule.Id, rule);
+        _context.Rules.Add(rule);
+        await _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -35,9 +40,9 @@ public class RuleService : IRuleService
     /// </summary>
     /// <param name="clientId">The client identifier.</param>
     /// <returns>A collection of sensor rules for the specified client.</returns>
-    public IEnumerable<SensorRule> GetRulesByClient(string clientId)
+    public async Task<IEnumerable<SensorRule>> GetRulesByClient(string clientId)
     {
-        return _rules.Values.Where(r => r.ClientId == clientId);
+        return await _context.Rules.Where(r => r.ClientId == clientId).ToListAsync();
     }
 
     /// <summary>
@@ -46,10 +51,16 @@ public class RuleService : IRuleService
     /// <param name="clientId">The client identifier.</param>
     /// <param name="ruleId">The identifier of the rule to delete.</param>
     /// <returns>True if the rule was successfully deleted; otherwise, false.</returns>
-    public bool DeleteRule(string clientId, string ruleId)
+    public async Task<bool> DeleteRule(string clientId, string ruleId)
     {
-        if (_rules.TryGetValue(ruleId, out var rule) && rule.ClientId == clientId)
-            return _rules.TryRemove(ruleId, out _);
+        if (await _context.Rules.AnyAsync(r => r.Id == ruleId && r.ClientId == clientId))
+        {
+            var rule = new SensorRule { Id = ruleId, ClientId = clientId };
+            _context.Rules.Attach(rule);
+            _context.Rules.Remove(rule);
+            await _context.SaveChangesAsync();
+            return true;
+        }
         return false;
     }
 
@@ -58,17 +69,19 @@ public class RuleService : IRuleService
     /// </summary>
     /// <param name="clientId">The client identifier.</param>
     /// <param name="payload">The sensor payload containing the data to evaluate.</param>
-    public void ExecuteRules(string clientId, SensorPayload payload)
+    public async Task ExecuteRules(string clientId, SensorPayload payload)
     {
         // 1. Search for relevant rules for the client and device in any condition
-        var relevantRules = _rules.Values
+        var relevantRules = await _context.Rules
+            .Include(r => r.Conditions)
+            .Include(r => r.Actions)
             .Where(r => r.ClientId == clientId &&
                         r.IsActive &&
                         r.Conditions.Any(c => c.DeviceId == payload.DeviceId))
-            .ToList();
+            .ToListAsync();
         
         var sensorService = _serviceProvider.GetRequiredService<ISensorService>();
-
+        
         foreach (var rule in relevantRules)
         {
             // Initial status depending on logical operator
@@ -88,7 +101,7 @@ public class RuleService : IRuleService
                 {
                     // If the device in the condition is different -> fetch last state from SensorService
                     // Use the ServiceProvider to avoid circular dependency
-                    var lastState = sensorService.GetById(clientId, condition.DeviceId);
+                    var lastState = await sensorService.GetById(clientId, condition.DeviceId);
 
                     if (lastState != null) conditionMet = EvaluateCondition(condition, lastState.Value, lastState.Type);
                 }
@@ -109,7 +122,10 @@ public class RuleService : IRuleService
             if (isTriggered)
             {
                 rule.LastTriggered = DateTime.UtcNow;
-                foreach (var action in rule.Actions) action.Execute(_serviceProvider, clientId, payload, rule);
+                await _context.SaveChangesAsync();
+                
+                foreach (var action in rule.Actions)
+                    await action.ExecuteAsync(_serviceProvider, clientId, payload, rule);
             }
         }
     }

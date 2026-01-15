@@ -24,12 +24,12 @@ public class RulesController : BaseApiController
     /// <param name="rule">The sensor rule to create</param>
     /// <returns>Action result indicating success or failure</returns>
     [HttpPost]
-    public IActionResult CreateRule([FromBody] SensorRule rule)
+    public async Task<IActionResult> CreateRule([FromBody] SensorRule rule)
     {
         var clientId = GetClientId();
         rule.ClientId = clientId;
 
-        _ruleService.AddRule(rule);
+        await _ruleService.AddRule(rule);
         return CreatedAtAction(nameof(GetRules), new { }, rule);
     }
 
@@ -38,10 +38,10 @@ public class RulesController : BaseApiController
     /// </summary>
     /// <returns>List of sensor rules</returns>
     [HttpGet]
-    public IActionResult GetRules()
+    public async Task<IActionResult> GetRules()
     {
         var clientId = GetClientId();
-        return Ok(_ruleService.GetRulesByClient(clientId));
+        return Ok(await _ruleService.GetRulesByClient(clientId));
     }
 
     /// <summary>
@@ -50,10 +50,10 @@ public class RulesController : BaseApiController
     /// <param name="id">The ID of the rule to delete</param>
     /// <returns>Action result indicating success or failure</returns>
     [HttpDelete("{id}")]
-    public IActionResult DeleteRule(string id)
+    public async Task<IActionResult> DeleteRule(string id)
     {
         var clientId = GetClientId();
-        if (_ruleService.DeleteRule(clientId, id)) return NoContent();
+        if (await _ruleService.DeleteRule(clientId, id)) return NoContent();
         return NotFound();
     }
 }
