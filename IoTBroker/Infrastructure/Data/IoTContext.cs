@@ -24,6 +24,10 @@ public class IoTContext : DbContext
             .HasKey(ds => new { ds.ClientId, ds.DeviceId });
         
         modelBuilder.Entity<ApiClient>().ToTable("api_clients");
+        
+        // Index for SensorPayload on ClientId and DeviceId for faster queries
+        modelBuilder.Entity<SensorPayload>()
+            .HasIndex(p => new { p.ClientId, p.DeviceId });
 
         // Configure RuleAction inheritance using TPH
         modelBuilder.Entity<RuleAction>()

@@ -40,6 +40,8 @@ public class SensorController : BaseApiController
         if (string.IsNullOrWhiteSpace(payload.DeviceId))
             return BadRequest("DeviceId is required.");
 
+        // TODO: Consider use authorization not only authentication  and implement device routes
+        //       Then auto automate DeviceId assignment to clients can be removed in ProcessPayload in SensorService
         var result = await _sensorService.ProcessPayload(GetClientId(), payload);
 
         // Service result check

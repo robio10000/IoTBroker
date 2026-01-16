@@ -52,10 +52,8 @@ public class SensorService : ISensorService
     /// <returns>The latest sensor payload or null if not found</returns>
     public async Task<SensorPayload?> GetById(string clientId, string id)
     {
-        var internalKey = GetInternalKey(clientId, id);
-
         return await _context.Payloads
-            .Where(p => p.DeviceId == internalKey)
+            .Where(p => p.ClientId == clientId && p.DeviceId == id)
             .OrderByDescending(p => p.Timestamp)
             .FirstOrDefaultAsync();
     }
@@ -68,10 +66,9 @@ public class SensorService : ISensorService
     /// <returns>Enumerable of sensor payloads</returns>
     public async Task<IEnumerable<SensorPayload>> GetHistoryById(string clientId, string id)
     {
-        var internalKey = GetInternalKey(clientId, id);
 
         return await _context.Payloads
-            .Where(p => p.DeviceId == internalKey)
+            .Where(p => p.ClientId == clientId && p.DeviceId == id)
             .OrderByDescending(p => p.Timestamp)
             .ToListAsync();
     }
@@ -84,8 +81,7 @@ public class SensorService : ISensorService
     /// <returns>True if exists, false otherwise</returns>
     public async Task<bool> Exists(string clientId, string id)
     {
-        var internalKey = GetInternalKey(clientId, id);
-        return await _context.Payloads.AnyAsync(p => p.DeviceId == internalKey);
+        return await _context.Payloads.AnyAsync(p => p.ClientId == clientId && p.DeviceId == id);
     }
 
     /// <summary>
@@ -96,8 +92,7 @@ public class SensorService : ISensorService
     /// <returns>True if deleted, false otherwise</returns>
     public async Task<bool> Delete(string clientId, string id)
     {
-        var internalKey = GetInternalKey(clientId, id);
-        var payloads = await _context.Payloads.Where(p => p.DeviceId == internalKey).ToListAsync();
+        var payloads = await _context.Payloads.Where(p => p.ClientId == clientId && p.DeviceId == id).ToListAsync();
         if (!payloads.Any()) return false;
         _context.Payloads.RemoveRange(payloads);
         await _context.SaveChangesAsync();
@@ -124,6 +119,9 @@ public class SensorService : ISensorService
         }
 
         // 2. Save history
+        payload.ClientId = clientId;
+        if( payload.Timestamp == default)
+            payload.Timestamp = DateTime.UtcNow;
         _context.Payloads.Add(payload);
 
         // 3. Ensure the device is registered to the client
@@ -181,15 +179,5 @@ public class SensorService : ISensorService
                 return new ServiceResult(false, "Unknown sensor type.");
         }
     }
-
-    /// <summary>
-    ///     Generate an internal key for storage based on client and device IDs
-    /// </summary>
-    /// <param name="clientId">The client ID</param>
-    /// <param name="deviceId">The device ID</param>
-    /// <returns>Internal storage key</returns>
-    private string GetInternalKey(string clientId, string deviceId)
-    {
-        return $"{clientId}_{deviceId}";
-    }
+    
 }

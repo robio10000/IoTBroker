@@ -13,6 +13,9 @@ public class SensorPayload
     [Required]
     [StringLength(50, MinimumLength = 3)]
     public string DeviceId { get; set; } = string.Empty;
+    
+    [JsonIgnore]
+    public string ClientId { get; set; } = string.Empty;
 
     [Required] public SensorType Type { get; set; }
 
