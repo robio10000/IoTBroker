@@ -42,13 +42,12 @@ builder.Services.AddSwaggerGen(c =>
 
     c.SelectSubTypesUsing(baseType =>
     {
-        if (baseType == typeof(IRuleAction)) return new[] {typeof(SetDeviceValueAction), typeof(WebHookAction) };
+        if (baseType == typeof(RuleAction)) return new[] {typeof(SetDeviceValueAction), typeof(WebHookAction) };
         return Enumerable.Empty<Type>();
     });
 
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        //Description = "In den Header 'X-API-KEY' eintragen",
         Description = "Enter your API key into the 'X-API-KEY' header",
         In = ParameterLocation.Header,
         Name = "X-API-KEY",
