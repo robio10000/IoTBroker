@@ -46,12 +46,12 @@ public class ClientsController : BaseApiController
     /// </summary>
     /// <returns>List of ApiClients</returns>
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
         if (!IsAuthorized(GetClientId()) && !IsAdmin())
             return StatusCode(403, "Forbidden: You cannot access other client profiles.");
 
-        var clients = _apiKeyService.GetAllClients();
+        var clients = await _apiKeyService.GetAllClients();
         if (!IsAdmin()) clients = clients.Where(c => c.Id == GetClientId());
         return Ok(clients);
     }
@@ -62,11 +62,12 @@ public class ClientsController : BaseApiController
     /// <param name="request">The client creation request payload</param>
     /// <returns>The created ApiClient</returns>
     [HttpPost]
-    public IActionResult Create([FromBody] CreateClientRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateClientRequest request)
     {
         if (!IsAdmin()) return StatusCode(403, "Forbidden: Admin access required.");
 
-        var client = _apiKeyService.CreateClient(request.Name, request.Roles, request.OwnedDevices);
+        _logger.LogInformation("Creating new API client with name: {ClientName}", request.Name);
+        var client = await _apiKeyService.CreateClient(request.Name, request.Roles, request.OwnedDevices);
         return CreatedAtAction(nameof(GetById), new { id = client.Id }, client);
     }
 
@@ -76,13 +77,13 @@ public class ClientsController : BaseApiController
     /// <param name="id">The ID of the client</param>
     /// <returns>The corresponding ApiClient</returns>
     [HttpGet("{id}")]
-    public IActionResult GetById(string id)
+    public async Task<IActionResult> GetById(string id)
     {
         // User check (id == client id)
         if (!IsAuthorized(id))
             return StatusCode(403, "Forbidden: You cannot access other client profiles.");
 
-        var client = _apiKeyService.GetClientById(id);
+        var client = await _apiKeyService.GetClientById(id);
         if (client == null) return NotFound();
         return Ok(client);
     }
@@ -93,21 +94,23 @@ public class ClientsController : BaseApiController
     /// <param name="id">The ID of the client to delete</param>
     /// <returns>NoContent if successful, NotFound if client does not exist</returns>
     [HttpDelete("{id}")]
-    public IActionResult Delete(string id)
+    public async Task<IActionResult> Delete(string id)
     {
         // User check
         if (!IsAdmin()) return StatusCode(403, "Forbidden: Admin access required.");
 
-        var success = _apiKeyService.RevokeClient(id);
+        _logger.LogInformation("Revoking API client with ID: {ClientId}", id);
+        var success = await _apiKeyService.RevokeClient(id);
         return success ? NoContent() : NotFound();
     }
 
     [HttpPost("{id}/devices")]
-    public IActionResult AddDevice(string id, [FromBody] string deviceId)
+    public async Task<IActionResult> AddDevice(string id, [FromBody] string deviceId)
     {
         if (!IsAdmin()) return StatusCode(403, "Forbidden: Admin access required.");
 
-        var result = _apiKeyService.AddDeviceToClient(id, deviceId);
+        _logger.LogInformation("Adding device {DeviceId} to client {ClientId}", deviceId, id);
+        var result = await _apiKeyService.AddDeviceToClient(id, deviceId);
         return result.Success ? Ok(result) : BadRequest(result.Message);
     }
 }

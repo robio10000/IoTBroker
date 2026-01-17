@@ -1,6 +1,7 @@
-using System.Collections.Concurrent;
 using IoTBroker.Domain;
 using IoTBroker.Features.Sensors;
+using IoTBroker.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace IoTBroker.Features.Clients;
 
@@ -9,7 +10,7 @@ namespace IoTBroker.Features.Clients;
 /// </summary>
 public class ApiKeyService : IApiKeyService
 {
-    private readonly ConcurrentDictionary<string, ApiClient> _clients = new();
+    private readonly IoTContext _context;
 
     private readonly ILogger<ApiKeyService> _logger;
 
@@ -17,9 +18,11 @@ public class ApiKeyService : IApiKeyService
     ///     Constructor initializes the service with test clients
     /// </summary>
     /// <param name="logger">Logger instance</param>
-    public ApiKeyService(ILogger<ApiKeyService> logger)
+    /// <param name="context">Database context</param>
+    public ApiKeyService(ILogger<ApiKeyService> logger, IoTContext context)
     {
         _logger = logger;
+        _context = context;
 
         var testClient = new ApiClient
         {
@@ -37,8 +40,20 @@ public class ApiKeyService : IApiKeyService
             Roles = new List<string> { "Admin" }
         };
 
-        _clients[testClient.Id] = testClient;
-        _clients[testAdminClient.Id] = testAdminClient;
+
+        if (!_context.Clients.Any(c => c.Id == testClient.Id))
+        {
+            _context.Clients.Add(testClient);
+            _logger.LogInformation("Added test API client with ID 'test-id' and API key 'client-key-123'");
+        }
+
+        if (!_context.Clients.Any(c => c.Id == testAdminClient.Id))
+        {
+            _context.Clients.Add(testAdminClient);
+            _logger.LogInformation("Added test Admin API client with ID 'admin-id' and API key 'admin-key-123'");
+        }
+
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -46,9 +61,9 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     /// <param name="apiKey">The API key to look up</param>
     /// <returns>The corresponding ApiClient or null if not found</returns>
-    public ApiClient? GetClientByKey(string apiKey)
+    public async Task<ApiClient?> GetClientByKey(string apiKey)
     {
-        return _clients.FirstOrDefault(c => c.Value.ApiKey == apiKey).Value;
+        return await _context.Clients.FirstOrDefaultAsync(c => c.ApiKey == apiKey);
     }
 
     /// <summary>
@@ -58,7 +73,7 @@ public class ApiKeyService : IApiKeyService
     /// <param name="roles">The roles assigned to the client</param>
     /// <param name="ownedDevices">Optional set of device IDs owned by the client</param>
     /// <returns>The newly created ApiClient</returns>
-    public ApiClient CreateClient(string name, List<string> roles, HashSet<string>? ownedDevices = null)
+    public async Task<ApiClient> CreateClient(string name, List<string> roles, HashSet<string>? ownedDevices = null)
     {
         var client = new ApiClient
         {
@@ -68,8 +83,9 @@ public class ApiKeyService : IApiKeyService
             Roles = roles,
             OwnedDevices = ownedDevices ?? new HashSet<string>()
         };
-        _clients[client.Id] = client;
-
+        
+        _context.Clients.Add(client);
+        await _context.SaveChangesAsync();
         _logger.LogInformation($"Client {client.Id} created");
         return client;
     }
@@ -79,20 +95,25 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     /// <param name="clientId">The ID of the client to revoke</param>
     /// <returns>True if the client was successfully revoked, false otherwise</returns>
-    public bool RevokeClient(string clientId)
+    public async Task<bool> RevokeClient(string clientId)
     {
-        _logger.LogInformation($"Revoking client {clientId}");
         // TODO: Remove cascaded data (e.g. sensor payloads)
-        return _clients.TryRemove(clientId, out _);
+        var client = await _context.Clients.FindAsync(clientId);
+        if (client == null) return false;
+        _context.Clients.Attach(client);
+        _context.Clients.Remove(client);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation($"Revoked client {clientId}");
+        return true;
     }
 
     /// <summary>
     ///     Retrieve all registered API clients
     /// </summary>
     /// <returns>Enumerable of all ApiClients</returns>
-    public IEnumerable<ApiClient> GetAllClients()
+    public async Task<IEnumerable<ApiClient>> GetAllClients()
     {
-        return _clients.Values;
+        return await _context.Clients.ToListAsync();
     }
 
     /// <summary>
@@ -100,10 +121,9 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     /// <param name="clientId">The ID of the client to look up</param>
     /// <returns>The corresponding ApiClient or null if not found</returns>
-    public ApiClient? GetClientById(string clientId)
+    public async Task<ApiClient?> GetClientById(string clientId)
     {
-        _clients.TryGetValue(clientId, out var client);
-        return client;
+        return await _context.Clients.FindAsync(clientId);
     }
 
     /// <summary>
@@ -112,13 +132,14 @@ public class ApiKeyService : IApiKeyService
     /// <param name="clientId">The ID of the client to update</param>
     /// <param name="roles">The new list of roles to assign</param>
     /// <returns>ServiceResult indicating success or failure</returns>
-    public ServiceResult UpdateClientRoles(string clientId, List<string> roles)
+    public async Task<ServiceResult> UpdateClientRoles(string clientId, List<string> roles)
     {
-        _clients.TryGetValue(clientId, out var client);
+        var client = await _context.Clients.FindAsync(clientId);
         if (client == null) return new ServiceResult(false, "Client not found");
 
         client.Roles = roles;
-        _clients[clientId] = client;
+        _context.Clients.Update(client);
+        await _context.SaveChangesAsync();
         return new ServiceResult(true, "Client roles updated");
     }
 
@@ -128,13 +149,13 @@ public class ApiKeyService : IApiKeyService
     /// <param name="clientId">The ID of the client to update</param>
     /// <param name="ownedDevices">The new set of owned device IDs</param>
     /// <returns>ServiceResult indicating success or failure</returns>
-    public ServiceResult UpdateClientOwnedDevices(string clientId, HashSet<string> ownedDevices)
+    public async Task<ServiceResult> UpdateClientOwnedDevices(string clientId, HashSet<string> ownedDevices)
     {
-        _clients.TryGetValue(clientId, out var client);
+        var client = await _context.Clients.FindAsync(clientId);
         if (client == null) return new ServiceResult(false, "Client not found");
-
         client.OwnedDevices = ownedDevices;
-        _clients[clientId] = client;
+        _context.Clients.Update(client);
+        await _context.SaveChangesAsync();
         return new ServiceResult(true, "Client owned devices updated");
     }
 
@@ -144,17 +165,18 @@ public class ApiKeyService : IApiKeyService
     /// <param name="clientId">The ID of the client</param>
     /// <param name="deviceId">The ID of the device to add</param>
     /// <returns>ServiceResult indicating success or failure</returns>
-    public ServiceResult AddDeviceToClient(string clientId, string deviceId)
+    public async Task<ServiceResult> AddDeviceToClient(string clientId, string deviceId)
     {
-        _clients.TryGetValue(clientId, out var client);
+        var client = await _context.Clients.FindAsync(clientId);
         if (client == null) return new ServiceResult(false, "Client not found");
-
-        lock (client)
+        if (client.OwnedDevices.Add(deviceId))
         {
-            if (client.OwnedDevices.Add(deviceId)) return new ServiceResult(true, "Device added to client");
-
-            return new ServiceResult(false, "Device already assigned to client");
+            _context.Clients.Update(client);
+            await _context.SaveChangesAsync();
+            return new ServiceResult(true, "Device added to client");
         }
+
+        return new ServiceResult(false, "Device already assigned to client");
     }
 
     /// <summary>
@@ -163,20 +185,21 @@ public class ApiKeyService : IApiKeyService
     /// <param name="clientId">The ID of the client</param>
     /// <param name="deviceId">The ID of the device to remove</param>
     /// <returns>ServiceResult indicating success or failure</returns>
-    public ServiceResult RemoveDeviceFromClient(string clientId, string deviceId)
+    public async Task<ServiceResult> RemoveDeviceFromClient(string clientId, string deviceId)
     {
-        if (!IsClientAuthorizedForDevice(clientId, deviceId))
+        if (!await IsClientAuthorizedForDevice(clientId, deviceId))
             return new ServiceResult(false, "Client not authorized for this device");
-        _clients.TryGetValue(clientId, out var client);
+        var client = await _context.Clients.FindAsync(clientId);
         if (client == null) return new ServiceResult(false, "Client not found");
-
         if (!client.OwnedDevices.Contains(deviceId)) return new ServiceResult(false, "Device not assigned to client");
-
-        lock (client)
+        if (client.OwnedDevices.Remove(deviceId))
         {
-            if (client.OwnedDevices.Remove(deviceId)) return new ServiceResult(true, "Device removed from client");
-            return new ServiceResult(false, "Device not assigned to client");
+            _context.Clients.Update(client);
+            await _context.SaveChangesAsync();
+            return new ServiceResult(true, "Device removed from client");
         }
+
+        return new ServiceResult(false, "Device not assigned to client");
     }
 
     /// <summary>
@@ -185,9 +208,9 @@ public class ApiKeyService : IApiKeyService
     /// <param name="clientId">The ID of the client</param>
     /// <param name="deviceId">The ID of the device</param>
     /// <returns>True if authorized, false otherwise</returns>
-    public bool IsClientAuthorizedForDevice(string clientId, string deviceId)
+    public async Task<bool> IsClientAuthorizedForDevice(string clientId, string deviceId)
     {
-        _clients.TryGetValue(clientId, out var client);
+        var client = await _context.Clients.FindAsync(clientId);
         if (client == null) return false;
 
         // Admin do everything

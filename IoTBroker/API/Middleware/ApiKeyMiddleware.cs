@@ -10,6 +10,7 @@ public class ApiKeyMiddleware
     private const string ApiKeyHeaderName = "X-API-KEY";
     private readonly RequestDelegate _next;
 
+    // TODO: Caching of valid API keys to reduce database lookups
     public ApiKeyMiddleware(RequestDelegate next)
     {
         _next = next;
@@ -37,7 +38,7 @@ public class ApiKeyMiddleware
             return;
         }
 
-        var client = apiKeyService.GetClientByKey(extractedApiKey);
+        var client = await apiKeyService.GetClientByKey(extractedApiKey);
         if (client == null)
         {
             context.Response.StatusCode = 401;

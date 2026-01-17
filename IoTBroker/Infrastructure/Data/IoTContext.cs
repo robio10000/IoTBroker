@@ -22,9 +22,21 @@ public class IoTContext : DbContext
         // Composite key for DeviceState
         modelBuilder.Entity<DeviceState>()
             .HasKey(ds => new { ds.ClientId, ds.DeviceId });
-        
+
         modelBuilder.Entity<ApiClient>().ToTable("api_clients");
-        
+        modelBuilder.Entity<ApiClient>(entity =>
+        {
+            entity.Property(e => e.Roles)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null));
+
+            entity.Property(e => e.OwnedDevices)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<HashSet<string>>(v, (JsonSerializerOptions)null));
+        });
+
         // Index for SensorPayload on ClientId and DeviceId for faster queries
         modelBuilder.Entity<SensorPayload>()
             .HasIndex(p => new { p.ClientId, p.DeviceId });
