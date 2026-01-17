@@ -39,8 +39,8 @@ public class SensorService : ISensorService
 
         // Filter payloads by clientId
         return await _context.Payloads
-            .Where(p => p.DeviceId.StartsWith(clientId + "_"))
-            .OrderByDescending(x => x.Timestamp)
+            .Where(p => p.ClientId == clientId)
+            .GroupBy(p => p.DeviceId, p => p, (key, g) => g.OrderByDescending(x => x.Timestamp).First())
             .ToListAsync();
     }
 
@@ -125,7 +125,7 @@ public class SensorService : ISensorService
         _context.Payloads.Add(payload);
 
         // 3. Ensure the device is registered to the client
-        _apiKeyService.AddDeviceToClient(clientId, payload.DeviceId);
+        await _apiKeyService.AddDeviceToClient(clientId, payload.DeviceId);
 
         // 4. Get or create the device history list
         var state = await _context.DeviceStates
