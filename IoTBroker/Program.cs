@@ -26,7 +26,9 @@ builder.Services.AddControllers()
         // Allow enum values as strings in JSON
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("WebHookClient", c => {
+    c.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

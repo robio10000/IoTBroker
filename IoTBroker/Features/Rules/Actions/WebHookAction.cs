@@ -27,7 +27,7 @@ public class WebHookAction : RuleAction //IRuleAction
         SensorPayload triggerPayload, SensorRule rule)
     {
         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-        var client = httpClientFactory.CreateClient();
+        var client = httpClientFactory.CreateClient("WebHookClient");
 
         // Replace tokens in URL and Payload
         var finalUrl = TokenReplacer.Replace(Url, triggerPayload, rule);

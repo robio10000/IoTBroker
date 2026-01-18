@@ -126,8 +126,8 @@ public class RuleService : IRuleService
                 rule.LastTriggered = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                foreach (var action in rule.Actions)
-                    await action.ExecuteAsync(_serviceProvider, clientId, payload, rule);
+                var tasks = rule.Actions.Select(a => a.ExecuteAsync(_serviceProvider, clientId, payload, rule));
+                await Task.WhenAll(tasks);
             }
         }
     }
