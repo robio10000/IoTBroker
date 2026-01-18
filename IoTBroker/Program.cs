@@ -16,7 +16,6 @@ using Microsoft.OpenApi.Models;
 /// Reach the health endpoint at /health
 /// Reach the Swagger UI at /doc
 /// </summary>
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Services
@@ -81,10 +80,34 @@ builder.Services.AddScoped<ITriggerStrategy, StringTriggerStrategy>();
 builder.Services.AddScoped<ISensorService, SensorService>();
 builder.Services.AddScoped<IRuleService, RuleService>();
 
-// TODO: Use configuration for connection string.
-// TODO: And Switch case for different DB providers (InMemory, SQLite MySQL, PostgeSQL) from appsettings.
+var dbProvider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SQLite";
+var connectionString = builder.Configuration.GetConnectionString(
+    dbProvider.ToLower() == "postgres" ? "PostgresConnection" : 
+    dbProvider.ToLower() == "mysql" ? "MySqlConnection" : "SQLiteConnection");
+
 builder.Services.AddDbContext<IoTContext>(options =>
-    options.UseSqlite("Data Source=iotbroker.db"));
+{
+    switch (dbProvider?.ToLower())
+    {
+        case "sqlite":
+            options.UseSqlite(connectionString);
+            break;
+        case "postgres":
+            options.UseNpgsql(connectionString);
+            break;
+        case "mysql":
+            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            break;
+        case "inmemory":
+            options.UseInMemoryDatabase("IoTBrokerTestDb");
+            break;
+        default:
+            throw new Exception($"Unsupported Database Provider: {dbProvider}. Supported providers are: SQLite, Postgres, MySQL, InMemory.");
+    }
+});
+
+//builder.Services.AddDbContext<IoTContext>(options =>
+//    options.UseSqlite("Data Source=iotbroker.db"));
 
 var app = builder.Build();
 
