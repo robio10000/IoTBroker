@@ -97,7 +97,6 @@ public class ApiKeyService : IApiKeyService
     /// <returns>True if the client was successfully revoked, false otherwise</returns>
     public async Task<bool> RevokeClient(string clientId)
     {
-        // TODO: Remove cascaded data (e.g. sensor payloads)
         var client = await _context.Clients.FindAsync(clientId);
         if (client == null) return false;
         _context.Clients.Attach(client);
