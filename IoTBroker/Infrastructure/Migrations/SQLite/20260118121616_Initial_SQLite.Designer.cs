@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IoTBroker.Infrastructure.Migrations.SQLite
 {
     [DbContext(typeof(IoTContext))]
-    [Migration("20260117180210_InitialSQLite")]
-    partial class InitialSQLite
+    [Migration("20260118121616_Initial_SQLite")]
+    partial class Initial_SQLite
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,7 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
             modelBuilder.Entity("IoTBroker.Domain.ApiClient", b =>
                 {
                     b.Property<string>("Id")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ApiKey")
@@ -49,9 +50,11 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
             modelBuilder.Entity("IoTBroker.Domain.DeviceState", b =>
                 {
                     b.Property<string>("ClientId")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DeviceId")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("LastUpdate")
@@ -77,11 +80,12 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
 
                     b.Property<string>("ClientId")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DeviceId")
                         .IsRequired()
-                        .HasMaxLength(50)
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Timestamp")
@@ -117,6 +121,7 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SensorRuleId")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -138,6 +143,7 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
 
                     b.Property<string>("DeviceId")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IgnoreCase")
@@ -147,6 +153,7 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SensorRuleId")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ThresholdValue")
@@ -163,10 +170,12 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.SensorRule", b =>
                 {
                     b.Property<string>("Id")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ClientId")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -197,6 +206,7 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
 
                     b.Property<string>("TargetDeviceId")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ValueType")

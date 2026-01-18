@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IoTBroker.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(IoTContext))]
-    [Migration("20260117180246_InitialPostgres")]
-    partial class InitialPostgres
+    [Migration("20260118121905_Initial_Postgres")]
+    partial class Initial_Postgres
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,7 +28,8 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
             modelBuilder.Entity("IoTBroker.Domain.ApiClient", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ApiKey")
                         .IsRequired()
@@ -54,10 +55,12 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
             modelBuilder.Entity("IoTBroker.Domain.DeviceState", b =>
                 {
                     b.Property<string>("ClientId")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("DeviceId")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime>("LastUpdate")
                         .HasColumnType("timestamp with time zone");
@@ -84,12 +87,13 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
 
                     b.Property<string>("ClientId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("DeviceId")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -126,7 +130,8 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
                         .HasColumnType("text");
 
                     b.Property<string>("SensorRuleId")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.HasKey("Id");
 
@@ -149,7 +154,8 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
 
                     b.Property<string>("DeviceId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<bool>("IgnoreCase")
                         .HasColumnType("boolean");
@@ -158,7 +164,8 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
                         .HasColumnType("integer");
 
                     b.Property<string>("SensorRuleId")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ThresholdValue")
                         .IsRequired()
@@ -174,11 +181,13 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.SensorRule", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ClientId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -208,7 +217,8 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
 
                     b.Property<string>("TargetDeviceId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<int>("ValueType")
                         .HasColumnType("integer");

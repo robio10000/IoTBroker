@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace IoTBroker.Infrastructure.Migrations.SQLite
 {
     /// <inheritdoc />
-    public partial class InitialSQLite : Migration
+    public partial class Initial_SQLite : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,7 +15,7 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                 name: "api_clients",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Id = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     ApiKey = table.Column<string>(type: "TEXT", nullable: false),
                     Roles = table.Column<string>(type: "TEXT", nullable: false),
@@ -30,8 +30,8 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                 name: "DeviceStates",
                 columns: table => new
                 {
-                    ClientId = table.Column<string>(type: "TEXT", nullable: false),
-                    DeviceId = table.Column<string>(type: "TEXT", nullable: false),
+                    ClientId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    DeviceId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     Value = table.Column<string>(type: "TEXT", nullable: false),
                     Type = table.Column<int>(type: "INTEGER", nullable: false),
                     LastUpdate = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -47,8 +47,8 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    DeviceId = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    ClientId = table.Column<string>(type: "TEXT", nullable: false),
+                    DeviceId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    ClientId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     Type = table.Column<int>(type: "INTEGER", nullable: false),
                     Value = table.Column<string>(type: "TEXT", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -62,8 +62,8 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                 name: "Rules",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
-                    ClientId = table.Column<string>(type: "TEXT", nullable: false),
+                    Id = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
+                    ClientId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     LogicalOperator = table.Column<int>(type: "INTEGER", nullable: false),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
@@ -82,8 +82,8 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     ActionType = table.Column<string>(type: "TEXT", maxLength: 21, nullable: false),
-                    SensorRuleId = table.Column<string>(type: "TEXT", nullable: true),
-                    TargetDeviceId = table.Column<string>(type: "TEXT", nullable: true),
+                    SensorRuleId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
+                    TargetDeviceId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
                     NewValue = table.Column<string>(type: "TEXT", nullable: true),
                     ValueType = table.Column<int>(type: "INTEGER", nullable: true),
                     Url = table.Column<string>(type: "TEXT", nullable: true),
@@ -107,11 +107,11 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    DeviceId = table.Column<string>(type: "TEXT", nullable: false),
+                    DeviceId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     Operator = table.Column<int>(type: "INTEGER", nullable: false),
                     ThresholdValue = table.Column<string>(type: "TEXT", nullable: false),
                     IgnoreCase = table.Column<bool>(type: "INTEGER", nullable: false),
-                    SensorRuleId = table.Column<string>(type: "TEXT", nullable: true)
+                    SensorRuleId = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {

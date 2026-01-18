@@ -4,7 +4,6 @@ using IoTBroker.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -12,11 +11,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IoTBroker.Infrastructure.Migrations.MySQL
 {
     [DbContext(typeof(IoTContext))]
-    [Migration("20260117180054_InitialMySQL")]
-    partial class InitialMySQL
+    partial class IoTContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,6 +25,7 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
             modelBuilder.Entity("IoTBroker.Domain.ApiClient", b =>
                 {
                     b.Property<string>("Id")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("ApiKey")
@@ -54,9 +52,11 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
             modelBuilder.Entity("IoTBroker.Domain.DeviceState", b =>
                 {
                     b.Property<string>("ClientId")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("DeviceId")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("LastUpdate")
@@ -84,12 +84,13 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
 
                     b.Property<string>("ClientId")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("DeviceId")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime(6)");
@@ -126,6 +127,7 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
                         .HasColumnType("longtext");
 
                     b.Property<string>("SensorRuleId")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
@@ -149,7 +151,8 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
 
                     b.Property<string>("DeviceId")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<bool>("IgnoreCase")
                         .HasColumnType("tinyint(1)");
@@ -158,6 +161,7 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
                         .HasColumnType("int");
 
                     b.Property<string>("SensorRuleId")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("ThresholdValue")
@@ -174,11 +178,13 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.SensorRule", b =>
                 {
                     b.Property<string>("Id")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("ClientId")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
@@ -208,7 +214,8 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
 
                     b.Property<string>("TargetDeviceId")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("ValueType")
                         .HasColumnType("int");
