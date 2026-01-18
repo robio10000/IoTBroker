@@ -7,6 +7,7 @@ using IoTBroker.Features.Rules.Strategies;
 using IoTBroker.Features.Sensors;
 using IoTBroker.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.OpenApi.Models;
 
 /// <summary>
@@ -90,24 +91,22 @@ builder.Services.AddDbContext<IoTContext>(options =>
     switch (dbProvider?.ToLower())
     {
         case "sqlite":
-            options.UseSqlite(connectionString);
+            options.UseSqlite(connectionString, x => x.MigrationsAssembly("IoTBroker"));
             break;
         case "postgres":
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString, x => x.MigrationsAssembly("IoTBroker"));
             break;
         case "mysql":
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), x => x.MigrationsAssembly("IoTBroker"));
             break;
         case "inmemory":
-            options.UseInMemoryDatabase("IoTBrokerTestDb");
+            options.UseInMemoryDatabase("IoTBrokerTestDb", x => x.EnableNullChecks(false));
             break;
         default:
             throw new Exception($"Unsupported Database Provider: {dbProvider}. Supported providers are: SQLite, Postgres, MySQL, InMemory.");
     }
+    options.ReplaceService<IMigrationsAssembly, ProviderSpecificMigrationsAssembly>();
 });
-
-//builder.Services.AddDbContext<IoTContext>(options =>
-//    options.UseSqlite("Data Source=iotbroker.db"));
 
 var app = builder.Build();
 
