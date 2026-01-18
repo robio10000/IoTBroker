@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IoTBroker.Infrastructure.Migrations.SQLite
 {
     [DbContext(typeof(IoTContext))]
-    [Migration("20260118121616_Initial_SQLite")]
+    [Migration("20260118212208_Initial_SQLite")]
     partial class Initial_SQLite
     {
         /// <inheritdoc />
@@ -241,14 +241,16 @@ namespace IoTBroker.Infrastructure.Migrations.SQLite
                 {
                     b.HasOne("IoTBroker.Features.Rules.Models.SensorRule", null)
                         .WithMany("Actions")
-                        .HasForeignKey("SensorRuleId");
+                        .HasForeignKey("SensorRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.RuleCondition", b =>
                 {
                     b.HasOne("IoTBroker.Features.Rules.Models.SensorRule", null)
                         .WithMany("Conditions")
-                        .HasForeignKey("SensorRuleId");
+                        .HasForeignKey("SensorRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.SensorRule", b =>

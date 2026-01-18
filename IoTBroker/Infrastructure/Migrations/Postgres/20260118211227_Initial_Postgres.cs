@@ -99,7 +99,8 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
                         name: "FK_RuleAction_Rules_SensorRuleId",
                         column: x => x.SensorRuleId,
                         principalTable: "Rules",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -121,7 +122,8 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
                         name: "FK_RuleCondition_Rules_SensorRuleId",
                         column: x => x.SensorRuleId,
                         principalTable: "Rules",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(

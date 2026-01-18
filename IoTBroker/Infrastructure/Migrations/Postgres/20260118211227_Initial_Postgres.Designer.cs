@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IoTBroker.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(IoTContext))]
-    [Migration("20260118121905_Initial_Postgres")]
+    [Migration("20260118211227_Initial_Postgres")]
     partial class Initial_Postgres
     {
         /// <inheritdoc />
@@ -252,14 +252,16 @@ namespace IoTBroker.Infrastructure.Migrations.Postgres
                 {
                     b.HasOne("IoTBroker.Features.Rules.Models.SensorRule", null)
                         .WithMany("Actions")
-                        .HasForeignKey("SensorRuleId");
+                        .HasForeignKey("SensorRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.RuleCondition", b =>
                 {
                     b.HasOne("IoTBroker.Features.Rules.Models.SensorRule", null)
                         .WithMany("Conditions")
-                        .HasForeignKey("SensorRuleId");
+                        .HasForeignKey("SensorRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.SensorRule", b =>

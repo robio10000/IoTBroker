@@ -40,7 +40,11 @@ public class RuleService : IRuleService
     /// <returns>A collection of sensor rules for the specified client.</returns>
     public async Task<IEnumerable<SensorRule>> GetRulesByClient(string clientId)
     {
-        return await _context.Rules.Where(r => r.ClientId == clientId).ToListAsync();
+        return await _context.Rules
+            .Where(r => r.ClientId == clientId)
+            .Include(r => r.Conditions)
+            .Include(r => r.Actions)
+            .ToListAsync();
     }
 
     /// <summary>
@@ -77,9 +81,9 @@ public class RuleService : IRuleService
                         r.IsActive &&
                         r.Conditions.Any(c => c.DeviceId == payload.DeviceId))
             .ToListAsync();
-        
+
         var sensorService = _serviceProvider.GetRequiredService<ISensorService>();
-        
+
         foreach (var rule in relevantRules)
         {
             // Initial status depending on logical operator
@@ -121,7 +125,7 @@ public class RuleService : IRuleService
             {
                 rule.LastTriggered = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                
+
                 foreach (var action in rule.Actions)
                     await action.ExecuteAsync(_serviceProvider, clientId, payload, rule);
             }

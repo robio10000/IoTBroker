@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IoTBroker.Infrastructure.Migrations.MySQL
 {
     [DbContext(typeof(IoTContext))]
-    [Migration("20260118121833_Initial_MySQL")]
+    [Migration("20260118212128_Initial_MySQL")]
     partial class Initial_MySQL
     {
         /// <inheritdoc />
@@ -252,14 +252,16 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
                 {
                     b.HasOne("IoTBroker.Features.Rules.Models.SensorRule", null)
                         .WithMany("Actions")
-                        .HasForeignKey("SensorRuleId");
+                        .HasForeignKey("SensorRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.RuleCondition", b =>
                 {
                     b.HasOne("IoTBroker.Features.Rules.Models.SensorRule", null)
                         .WithMany("Conditions")
-                        .HasForeignKey("SensorRuleId");
+                        .HasForeignKey("SensorRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("IoTBroker.Features.Rules.Models.SensorRule", b =>

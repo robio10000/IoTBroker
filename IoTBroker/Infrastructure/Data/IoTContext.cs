@@ -56,13 +56,31 @@ public class IoTContext : DbContext
         // SensorPayload (Index for performance)
         modelBuilder.Entity<SensorPayload>()
             .HasIndex(p => new { p.ClientId, p.DeviceId });
+        
+        // SensorRule Cascade Deletes for Conditions and Actions
+        modelBuilder.Entity<SensorRule>(entity =>
+        {
+            // Conditions relation
+            entity.HasMany(r => r.Conditions)
+                .WithOne()
+                .HasForeignKey("SensorRuleId")
+                .OnDelete(DeleteBehavior.Cascade);
 
+            // Actions relation
+            entity.HasMany(r => r.Actions)
+                .WithOne()
+                .HasForeignKey("SensorRuleId")
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        
+        
+        
         // RuleActions (TPH)
         modelBuilder.Entity<RuleAction>()
             .HasDiscriminator<string>("ActionType")
             .HasValue<WebHookAction>("webhook")
             .HasValue<SetDeviceValueAction>("set_device_value");
-
+        
         // WebHookAction Headers: Dictionary with Comparer
         modelBuilder.Entity<WebHookAction>()
             .Property(b => b.Headers)

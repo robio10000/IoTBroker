@@ -129,7 +129,8 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
                         name: "FK_RuleAction_Rules_SensorRuleId",
                         column: x => x.SensorRuleId,
                         principalTable: "Rules",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -155,7 +156,8 @@ namespace IoTBroker.Infrastructure.Migrations.MySQL
                         name: "FK_RuleCondition_Rules_SensorRuleId",
                         column: x => x.SensorRuleId,
                         principalTable: "Rules",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
