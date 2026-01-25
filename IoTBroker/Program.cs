@@ -6,6 +6,7 @@ using IoTBroker.Features.Rules.Actions;
 using IoTBroker.Features.Rules.Strategies;
 using IoTBroker.Features.Sensors;
 using IoTBroker.Infrastructure.Data;
+using IoTBroker.Infrastructure.Swagger;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.OpenApi.Models;
@@ -41,6 +42,7 @@ builder.Services.AddSwaggerGen(c =>
 
     c.UseAllOfForInheritance();
     c.UseOneOfForPolymorphism();
+    c.SchemaFilter<PolymorphismSchemaFilter>();
 
     c.SelectSubTypesUsing(baseType =>
     {
