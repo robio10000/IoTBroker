@@ -1,9 +1,14 @@
 using System.Text.Json.Serialization;
-using IoTBroker.Middleware;
-using IoTBroker.Rules;
-using IoTBroker.Rules.Actions;
-using IoTBroker.Rules.Strategies;
-using IoTBroker.Services;
+using IoTBroker.API.Middleware;
+using IoTBroker.Features.Clients;
+using IoTBroker.Features.Rules;
+using IoTBroker.Features.Rules.Actions;
+using IoTBroker.Features.Rules.Strategies;
+using IoTBroker.Features.Sensors;
+using IoTBroker.Infrastructure.Data;
+using IoTBroker.Infrastructure.Swagger;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.OpenApi.Models;
 
 /// <summary>
@@ -13,7 +18,6 @@ using Microsoft.OpenApi.Models;
 /// Reach the health endpoint at /health
 /// Reach the Swagger UI at /doc
 /// </summary>
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Services
@@ -23,7 +27,9 @@ builder.Services.AddControllers()
         // Allow enum values as strings in JSON
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("WebHookClient", c => {
+    c.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -36,16 +42,16 @@ builder.Services.AddSwaggerGen(c =>
 
     c.UseAllOfForInheritance();
     c.UseOneOfForPolymorphism();
+    c.SchemaFilter<PolymorphismSchemaFilter>();
 
     c.SelectSubTypesUsing(baseType =>
     {
-        if (baseType == typeof(IRuleAction)) return new[] {typeof(SetDeviceValueAction), typeof(WebHookAction) };
+        if (baseType == typeof(RuleAction)) return new[] {typeof(SetDeviceValueAction), typeof(WebHookAction) };
         return Enumerable.Empty<Type>();
     });
 
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        //Description = "In den Header 'X-API-KEY' eintragen",
         Description = "Enter your API key into the 'X-API-KEY' header",
         In = ParameterLocation.Header,
         Name = "X-API-KEY",
@@ -70,14 +76,41 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddSingleton<ISensorService, SensorService>();
-builder.Services.AddSingleton<IApiKeyService, ApiKeyService>();
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 
-builder.Services.AddSingleton<ITriggerStrategy, NumericTriggerStrategy>();
-builder.Services.AddSingleton<ITriggerStrategy, BooleanTriggerStrategy>();
-builder.Services.AddSingleton<ITriggerStrategy, StringTriggerStrategy>();
+builder.Services.AddScoped<ITriggerStrategy, NumericTriggerStrategy>();
+builder.Services.AddScoped<ITriggerStrategy, BooleanTriggerStrategy>();
+builder.Services.AddScoped<ITriggerStrategy, StringTriggerStrategy>();
 
-builder.Services.AddSingleton<IRuleService, RuleService>();
+builder.Services.AddScoped<ISensorService, SensorService>();
+builder.Services.AddScoped<IRuleService, RuleService>();
+
+var dbProvider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SQLite";
+var connectionString = builder.Configuration.GetConnectionString(
+    dbProvider.ToLower() == "postgres" ? "PostgresConnection" : 
+    dbProvider.ToLower() == "mysql" ? "MySqlConnection" : "SQLiteConnection");
+
+builder.Services.AddDbContext<IoTContext>(options =>
+{
+    switch (dbProvider?.ToLower())
+    {
+        case "sqlite":
+            options.UseSqlite(connectionString, x => x.MigrationsAssembly("IoTBroker"));
+            break;
+        case "postgres":
+            options.UseNpgsql(connectionString, x => x.MigrationsAssembly("IoTBroker"));
+            break;
+        case "mysql":
+            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), x => x.MigrationsAssembly("IoTBroker"));
+            break;
+        case "inmemory":
+            options.UseInMemoryDatabase("IoTBrokerTestDb", x => x.EnableNullChecks(false));
+            break;
+        default:
+            throw new Exception($"Unsupported Database Provider: {dbProvider}. Supported providers are: SQLite, Postgres, MySQL, InMemory.");
+    }
+    options.ReplaceService<IMigrationsAssembly, ProviderSpecificMigrationsAssembly>();
+});
 
 var app = builder.Build();
 
