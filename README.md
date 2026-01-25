@@ -1,6 +1,6 @@
 # IoTBroker 🚀
 [![.NET](https://img.shields.io/badge/.NET-9.0-blue.svg)](https://dotnet.microsoft.com/en-us/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ![Static Badge](https://img.shields.io/badge/Build-passing-brightgreen)
 ![Static Badge](https://img.shields.io/badge/Testing-Unit%20Tests-red)
@@ -179,6 +179,6 @@ This project is under active development. Our upcoming milestones include:
 
 ## 📝 License
 
-This project is licensed under the MIT License.
+Distributed under the **Apache 2.0** License. Maintained by [GOERISSEN.DEV](https://goerissen.dev/).
 
 ---
