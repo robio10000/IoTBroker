@@ -1,0 +1,38 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: IoTBroker/Dockerfile
+    ports:
+      - "${EXTERNAL_PORT}:${INTERNAL_PORT}"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${DOTNET_ENV}
+      - ASPNETCORE_URLS=http://0.0.0.0:${INTERNAL_PORT}
+      - DatabaseProvider=${DB_PROVIDER}
+      # .NET recognizes double underscores as section separators from appsettings (ConnectionStrings:PostgresConnection)
+      - ConnectionStrings__PostgresConnection=Host=${DB_HOST};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      #- ConnectionStrings__MySqlConnection=Server=${DB_HOST};Database=${DB_NAME};User=${DB_USER};Password=${DB_PASSWORD};
+      #- ConnectionStrings__SqLiteConnection=Data Source=${DB_HOST}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - ${DB_EXTERNAL_PORT}:${DB_INTERNAL_PORT}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    
