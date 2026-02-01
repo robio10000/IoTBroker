@@ -35,42 +35,65 @@ IoTBroker serves as a central intelligence layer for smart environments. It proc
 
 #### 1. Prerequisites
 
-* [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-* A running instance of PostgreSQL or MySQL (optional, SQLite works out-of-the-box)
+* [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) for DB migrations and local builds.
+* [Docker & Docker Compose (for containerized DB setup)](https://docs.docker.com/compose/install/)
 
 #### 2. Configuration
 
-IoTBroker supports multiple database providers. Configure your choice in `appsettings.json`:
+IoTBroker supports multiple database providers. Copy the `.env.example` to `.env` and adjust the settings as needed.:
 
 ```json
-{
-  "DatabaseProvider": "Postgres", // Options: "Postgres", "SQLite", "MySQL", "InMemory"
-  "ConnectionStrings": {
-    "SQLiteConnection": "Data Source=iotbroker.db",
-    "PostgresConnection": "Host=localhost;Database=iot_broker_metadata;Username=broker_admin;Password=adminpassword",
-    "MySqlConnection": "Server=localhost;Database=iot_broker_db;User=broker_user;Password=userpassword"
-  }
-}
+# --- API CONFIGURATION ---
+EXTERNAL_PORT=5500
+INTERNAL_PORT=8080
+DOTNET_ENV=Development
+
+# --- DATABASE CONFIGURATION ---
+DB_USEDOCKER=true
+DB_PROVIDER=Postgres
+DB_HOST=db
+DB_NAME=iot_broker_metadata
+DB_USER=broker_admin
+DB_PASSWORD=adminpassword
+DB_EXTERNAL_PORT=5432
+DB_INTERNAL_PORT=5432
 
 ```
 
-#### 3. Database Migrations
+#### 3. Run the Application
+
+```bash
+# Run first to look for failures:
+docker compose up
+
+# After successful build, run in detached mode (In the background):
+docker compose up -d
+
+```
+
+#### 4. Database Migrations
 
 Apply the migrations for your configured provider:
 
 ```bash
 dotnet ef database update --context IoTContext --project IoTBroker
+# For PostgreSQL, use:
+dotnet ef database update --project IoTBroker/IoTBroker.csproj --startup-project IoTBroker/IoTBroker.csproj --context IoTBroker.Infrastructure.Data.IoTContext --configuration Debug 20260118211227_Initial_Postgres --connection Host=YOUR_DB_HOST;Database=YOUR_DB_NAME;Username=YOUR_DB_USERNAME;Password=YOUR_DB_PASSWORD
 
+# For MySQL, use:
+dotnet ef database update --project IoTBroker/IoTBroker.csproj --startup-project IoTBroker/IoTBroker.csproj --context IoTBroker.Infrastructure.Data.IoTContext --configuration Debug 20260118212128_Initial_MySQL --connection Server=YOUR_DB_HOST;Database=YOUR_DB_NAME;User=YOUR_DB_USERNAME;Password=YOUR_DB_PASSWORD
+
+# For SQLite, use:
+dotnet ef database update --project IoTBroker/IoTBroker.csproj --startup-project IoTBroker/IoTBroker.csproj --context IoTBroker.Infrastructure.Data.IoTContext --configuration Debug 20260118212208_Initial_SQLite --connection "Data Source=/.../ProjectRoot/IoTBroker/iotbroker.db"
 ```
 
-#### 4. Run the Application
+*If Ef Core tools are not installed, run:*
 
 ```bash
-dotnet run --project IoTBroker --launch-profile https
-
+dotnet tool install --global dotnet-ef
 ```
 
-Once started, the interactive API documentation is available at: `https://localhost:7045/doc` (or your configured port).
+Once started, the interactive API documentation is available at: `http://localhost:5500/doc` (or your configured port).
 
 ---
 
