@@ -19,10 +19,12 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     /// <param name="logger">Logger instance</param>
     /// <param name="context">Database context</param>
-    public ApiKeyService(ILogger<ApiKeyService> logger, IoTContext context)
+    public ApiKeyService(ILogger<ApiKeyService> logger, IoTContext context, IHostEnvironment env)
     {
         _logger = logger;
         _context = context;
+
+        if (!env.IsDevelopment()) return;
 
         var testClient = new ApiClient
         {
@@ -83,7 +85,7 @@ public class ApiKeyService : IApiKeyService
             Roles = roles,
             OwnedDevices = ownedDevices ?? new HashSet<string>()
         };
-        
+
         _context.Clients.Add(client);
         await _context.SaveChangesAsync();
         _logger.LogInformation($"Client {client.Id} created");
