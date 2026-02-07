@@ -1,139 +1,19 @@
-using System.Text.Json.Serialization;
-using IoTBroker.API.Middleware;
-using IoTBroker.Features.Clients;
-using IoTBroker.Features.Rules;
-using IoTBroker.Features.Rules.Actions;
-using IoTBroker.Features.Rules.Strategies;
-using IoTBroker.Features.Sensors;
-using IoTBroker.Infrastructure.Data;
-using IoTBroker.Infrastructure.Swagger;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.OpenApi.Models;
+using IoTBroker.Extensions;
 
 /// <summary>
 /// Main entry point for the IoTBroker application.
-/// Configures services, middleware, and a simple health endpoints.
-/// Also sets up Swagger for API documentation.
-/// Reach the health endpoint at /health
-/// Reach the Swagger UI at /doc
+/// Initializes the web application and starts the application.
 /// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
-// Services
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Allow enum values as strings in JSON
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-builder.Services.AddHttpClient("WebHookClient", c => {
-    c.Timeout = TimeSpan.FromSeconds(10);
-});
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "IoTBroker API",
-        Version = "v1",
-        Description = "API for IoTBroker"
-    });
+builder.Services.AddIoTBrokerServices(builder.Configuration);
 
-    c.UseAllOfForInheritance();
-    c.UseOneOfForPolymorphism();
-    c.SchemaFilter<PolymorphismSchemaFilter>();
+builder.Services.AddIoTBrokerSwagger();
 
-    c.SelectSubTypesUsing(baseType =>
-    {
-        if (baseType == typeof(RuleAction)) return new[] {typeof(SetDeviceValueAction), typeof(WebHookAction) };
-        return Enumerable.Empty<Type>();
-    });
-
-    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-    {
-        Description = "Enter your API key into the 'X-API-KEY' header",
-        In = ParameterLocation.Header,
-        Name = "X-API-KEY",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "ApiKeyScheme"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "ApiKey"
-                },
-                In = ParameterLocation.Header
-            },
-            new List<string>()
-        }
-    });
-});
-
-builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-
-builder.Services.AddScoped<ITriggerStrategy, NumericTriggerStrategy>();
-builder.Services.AddScoped<ITriggerStrategy, BooleanTriggerStrategy>();
-builder.Services.AddScoped<ITriggerStrategy, StringTriggerStrategy>();
-
-builder.Services.AddScoped<ISensorService, SensorService>();
-builder.Services.AddScoped<IRuleService, RuleService>();
-
-var dbProvider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SQLite";
-var connectionString = builder.Configuration.GetConnectionString(
-    dbProvider.ToLower() == "postgres" ? "PostgresConnection" : 
-    dbProvider.ToLower() == "mysql" ? "MySqlConnection" : "SQLiteConnection");
-
-builder.Services.AddDbContext<IoTContext>(options =>
-{
-    switch (dbProvider?.ToLower())
-    {
-        case "sqlite":
-            options.UseSqlite(connectionString, x => x.MigrationsAssembly("IoTBroker"));
-            break;
-        case "postgres":
-            options.UseNpgsql(connectionString, x => x.MigrationsAssembly("IoTBroker"));
-            break;
-        case "mysql":
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), x => x.MigrationsAssembly("IoTBroker"));
-            break;
-        case "inmemory":
-            options.UseInMemoryDatabase("IoTBrokerTestDb", x => x.EnableNullChecks(false));
-            break;
-        default:
-            throw new Exception($"Unsupported Database Provider: {dbProvider}. Supported providers are: SQLite, Postgres, MySQL, InMemory.");
-    }
-    options.ReplaceService<IMigrationsAssembly, ProviderSpecificMigrationsAssembly>();
-});
+builder.Services.AddIoTBrokerDb(builder.Configuration);
 
 var app = builder.Build();
 
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "IoTBroker v1");
-        c.RoutePrefix = "doc";
-    });
-}
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.UseMiddleware<ApiKeyMiddleware>();
-
-app.MapControllers();
-
-app.MapGet("/health", () => Results.Ok(new { Message = "IoTBroker is running" }))
-    .WithName("Root");
+app.UseIoTBroker();
 
 app.Run();
