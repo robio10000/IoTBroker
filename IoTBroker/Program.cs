@@ -4,6 +4,10 @@ using IoTBroker.Extensions;
 /// Main entry point for the IoTBroker application.
 /// Initializes the web application and starts the application.
 /// </summary>
+
+// Override the default configuration to load environment variables from a .env file
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddIoTBrokerServices(builder.Configuration);
