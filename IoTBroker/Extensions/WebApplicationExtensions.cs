@@ -12,7 +12,7 @@ public static class WebApplicationExtensions
     /// <param name="app"></param>
     public static void UseIoTBroker(this WebApplication app)
     {
-        ///app.UseMiddleware<ExceptionMiddleware>(); // TODO: Create global exception handling middleware
+        app.UseMiddleware<ExceptionMiddleware>();
 
         if (app.Environment.IsDevelopment())
         {
